@@ -1,0 +1,11 @@
+@import '~todomvc-common/base.css';
+@import '~todomvc-app-css/index.css';
+
+@keyframes hide {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
