@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {Todo} from './components/todo/todo.model';
+import { Todo } from './components/todo/todo.model';
 
 @Injectable()
 export class TodoService {
@@ -17,12 +17,12 @@ export class TodoService {
 	}
 
 	create(todo: string): Todo {
-		todo =  todo.trim();
+		todo = todo.trim();
 		if (todo.length === 0) {
 			return;
 		}
 		const newTodo = new Todo(++this.lastInsertId, todo);
-		this.todos.push(newTodo);
+		this.todos = [...this.todos, newTodo];
 		this.save();
 		return newTodo;
 	}
@@ -31,11 +31,8 @@ export class TodoService {
 		return this.todos;
 	}
 
-	update(todo: Todo) {
-		todo.title = todo.title.trim();
-		if (todo.title.length === 0) {
-			this.delete(todo);
-		}
+	update(todoToUpdate: Todo) {
+
 		this.save();
 	}
 
@@ -44,13 +41,13 @@ export class TodoService {
 		this.save();
 	}
 
-	toggle(todo: Todo) {
-		todo.completed = !todo.completed;
+	toggle(todoToUpdate: Todo) {
+		this.todos = this.todos.map((todo) => todo.id === todoToUpdate.id ? {...todo, completed: !todo.completed} : todo);
 		this.save();
 	}
 
 	toggleAll(completed: boolean) {
-		this.todos.forEach((t) => t.completed = completed);
+		this.todos = this.todos.map((t) => ({...t, completed}));
 		this.save();
 	}
 
