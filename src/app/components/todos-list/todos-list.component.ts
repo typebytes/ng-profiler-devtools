@@ -4,26 +4,26 @@ import { Todo, TodoUtils } from '../todo/todo.model';
 @Component({
 	selector: 'app-todos-list',
 	template: `
-		<section *ngIf="todos.length > 0" class="main">
-			<input class="toggle-all" id="toggle-all" type="checkbox"
-					 #inputToggleAll [checked]="allCompleted" (click)="toggleAll.emit()">
-			<label for="toggle-all">Mark all as complete</label>
-			<ul class="todo-list">
-				<!--TODO: do something with filtered todos here-->
-				<li *ngFor="let todo of todos"
-					 [ngClass]="{'completed' : todo.completed, 'editing': todo == currentTodo}">
-					<div class="view">
-						<input class="toggle" type="checkbox" (change)="toggle.emit(todo)" [checked]="todo.completed">
-						<label *ngIf="currentTodo?.id != todo.id" (dblclick)="edit(todo)">{{todo.title}}</label>
-						<button (click)="delete.emit(todo)" class="destroy"></button>
-					</div>
-					<input *ngIf="currentTodo == todo" [(ngModel)]="currentTodo.title"
-							 (keyup.enter)="update.emit(currentTodo)"
-							 (keyup.esc)="cancelEdit()"
-							 class="edit">
-				</li>
-			</ul>
-		</section>
+        <section *ngIf="todos.length > 0" class="main">
+            <input class="toggle-all" id="toggle-all" type="checkbox"
+                   #inputToggleAll [checked]="allCompleted" (click)="toggleAll.emit()">
+            <label for="toggle-all">Mark all as complete</label>
+            <ul class="todo-list">
+                <!--TODO: do something with filtered todos here-->
+                <li *ngFor="let todo of todos"
+                    [ngClass]="{'completed' : todo.completed, 'editing': todo == currentTodo}">
+                    <app-todo-item
+                            [todo]="todo"
+                            [currentTodo]="currentTodo"
+                            (edit)="edit($event)"
+                            (cancelEdit)="cancelEdit()"
+                            (delete)="delete.emit($event)"
+                            (toggle)="toggle.emit($event)"
+                            (update)="update.emit($event)"
+                    ></app-todo-item>
+                </li>
+            </ul>
+        </section>
 	`,
 	styleUrls: ['./todos-list.component.css'],
 	changeDetection: ChangeDetectionStrategy.OnPush
