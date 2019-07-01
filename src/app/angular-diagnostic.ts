@@ -48,10 +48,8 @@ class Tracer {
 	present(tagName, measurement) {
 		var data;
 		if (this._pool.has(tagName)) {
-			console.log('old measurement');
 			data = this._pool.get(tagName);
 		} else {
-			console.log('new measurement');
 			data = {
 				hit: 0,
 				...measurement
@@ -127,10 +125,7 @@ class Tracer {
 			canvas.width,
 			canvas.height
 		);
-		console.log(pool);
 		for (const [tagName, data] of pool.entries()) {
-			console.log(data.hit);
-
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
 			drawBorder(ctx, data, 1, color);
 		}
@@ -282,53 +277,44 @@ const refs = {};
 
 const tracer = new Tracer();
 
-const monkeyPatchTemplate = (instance: LView, isRoot = false) => {
-	const origTemplate = instance[1].template;
-	instance[1].template = function (...args) {
-		console.debug('Calling the original template function');
+/**
+ * This is the next lView that will be used by a certain template function
+ */
+let stateLView: LView;
+
+let isFirstExecution = false;
+let rootLView;
+const monkeyPatchTemplate = (tView: TView) => {
+	if (!isFirstExecution) {
+		isFirstExecution = true;
+		rootLView = readPatchedLView((stateLView[CONTEXT] as RootContext).components[0]);
+		console.log(rootLView);
+	}
+	if ((tView.template as any).__patched) {
+		console.log('already patched');
+		return;
+	}
+	const origTemplate = tView.template;
+	console.log('patching!');
+	tView.template = function (...args) {
+		const currentLView = rootLView ? rootLView : stateLView;
+		console.log('Need to set it here...');
 		origTemplate(...args);
-		console.debug('After the original template function');
-		const tagName = instance[0].tagName;
-		console.log('CD for ', tagName);
-		// if (refs[tagName]) {
-		//     document.body.removeChild(refs[tagName]);
-		// }
+		// time to walk the tree from this instance to see if new dynamic
+		// views were created
+		monkeyPatchDescendantViews(currentLView, true);
+		console.log(currentLView);
+		const tagName = currentLView[HOST].tagName;
+		console.log('CD for ', tagName, args[0]);
 
+		console.log('Predict the next lView after ', tagName);
+		setNextLView(currentTree);
 		Zone.root.run(() => {
-			setTimeout(() => tracer.present(tagName, createMeasurement(instance[0].getBoundingClientRect())));
+			setTimeout(() => tracer.present(tagName, createMeasurement(currentLView[0].getBoundingClientRect())));
 		});
-
-		// const runOutsideZone = () => {
-		//     setTimeout(() => {
-		//         // const div = createDiv(instance[0].getBoundingClientRect(), tagName);
-		//         // refs[tagName] = div;
-		//         // document.body.appendChild(div);
-		//         // Zone.root.run(() => {
-		//         //     // TODO should this event listener be removed as well?
-		//         //     div.addEventListener('animationend', () => {
-		//         //         console.log('Removing the div');
-		//         //         document.body.removeChild(div);
-		//         //         delete refs[tagName];
-		//         //     });
-		//         // });
-		//     });
-		// };
-		//
-		// Zone.root.run(runOutsideZone);
 	};
+	(tView.template as any).__patched = true;
 };
-//
-// const loopComponents = (parentNode) => {
-// 	const components = parentNode[1].components;
-// 	if (!components) {
-// 		return;
-// 	}
-// 	for (let i = 0; i < components.length; i++) {
-// 		console.log('found component ' + parentNode[components[i]][0].tagName);
-// 		monkeyPatchTemplate(parentNode[components[i]]);
-// 		loopComponents(parentNode[components[i]]);
-// 	}
-// };
 
 const findRootNode = (node) => {
 	if (!node || !node.childNodes) {
@@ -342,6 +328,7 @@ const findRootNode = (node) => {
 			// monkeyPatchTemplate(instance, true);
 			// loopComponents(instance);
 			const rootLView: LView = childNode[MONKEY_PATCH_KEY_NAME].debug._raw_lView;
+			stateLView = rootLView;
 			monkeyPatchRootTree(rootLView[CONTEXT] as RootContext);
 		} else {
 			findRootNode(childNode);
@@ -349,7 +336,6 @@ const findRootNode = (node) => {
 	}
 };
 
-console.log('timeout!');
 
 export function start() {
 	setTimeout(() => {
@@ -379,8 +365,7 @@ export function isLView(value: any | LView | LContainer | any | {} | null):
  */
 function componentRefresh(adjustedElementIndex: number, lView: LView) {
 	const childLView = getComponentViewByIndex(adjustedElementIndex, lView);
-	console.log(childLView[HOST].tagName);
-	monkeyPatchTemplate(childLView, false);
+	monkeyPatchTemplate(childLView[TVIEW]);
 	monkeyPatchDescendantViews(childLView);
 }
 
@@ -391,6 +376,44 @@ function monkeyPatchChildComponents(components: number[] | null, lView: LView): 
 			componentRefresh(components[i], lView);
 		}
 	}
+}
+
+// TODO: properly name this
+interface ViewLoop {
+	lView: LView;
+	currentIndex: number;
+	children: ViewLoop[];
+	parent?: ViewLoop;
+}
+
+let rootTree: ViewLoop;
+let currentTree: ViewLoop;
+
+function setNextLView(viewLoop?: ViewLoop) {
+	if (!rootTree) {
+		rootTree = {
+			lView: rootLView,
+			currentIndex: 0,
+			children: [],
+		};
+		currentTree = rootTree;
+	}
+	// first check dynamic embedded views
+
+	// check child components
+	const components = currentTree.lView[TVIEW].components;
+	if (currentTree.currentIndex > components.length) {
+		// Done with looping the components, need to go one up and set prev lView
+		setNextLView(currentTree.parent);
+	}
+	stateLView = currentTree.lView[components[currentTree.currentIndex]];
+	currentTree.currentIndex++;
+	currentTree.children.push({
+		lView: stateLView,
+		currentIndex: 0,
+		children: [],
+		parent: currentTree
+	});
 }
 
 
@@ -406,7 +429,8 @@ function refreshDynamicEmbeddedViews(lView) {
 				/** @type {?} */
 				const dynamicViewData = container[VIEW_REFS][i];
 				// Should be the ngFor context
-				console.log(dynamicViewData);
+				// console.log(dynamicViewData);
+				monkeyPatchDescendantViews(dynamicViewData);
 				// renderEmbeddedTemplate(dynamicViewData, dynamicViewData[TVIEW], (/** @type {?} */ (dynamicViewData[CONTEXT])));
 			}
 		}
@@ -414,12 +438,14 @@ function refreshDynamicEmbeddedViews(lView) {
 }
 
 
-export function monkeyPatchDescendantViews(lView: LView) {
+export function monkeyPatchDescendantViews(lView: LView, onlyDynamic = false) {
 	const tView: TView = lView[TVIEW];
 
 	const creationMode = isCreationMode(lView);
 
-	monkeyPatchChildComponents(tView.components, lView);
+	if (!onlyDynamic) {
+		monkeyPatchChildComponents(tView.components, lView);
+	}
 	refreshDynamicEmbeddedViews(lView);
 }
 
