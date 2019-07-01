@@ -135,6 +135,8 @@ interface ViewLoop {
 	children: ViewLoop[];
 	parent?: ViewLoop;
 	isRoot: boolean;
+	nextCurrent?: any;
+	checkedDynamicComponents?: boolean;
 }
 
 let rootTree: ViewLoop;
@@ -152,7 +154,6 @@ function resetState() {
  * @param rootLView
  */
 function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
-	console.debug('setnexlview called');
 	if (!rootTree) {
 		rootTree = {
 			lView: rootLView,
@@ -163,10 +164,35 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 		currentTree = rootTree;
 		viewLoop = rootTree;
 	}
-	// first check dynamic embedded views
+	if (!viewLoop.checkedDynamicComponents) {
+		// first check dynamic embedded views
+		for (let current: LContainer = viewLoop.nextCurrent !== undefined ? viewLoop.nextCurrent : viewLoop.lView[CHILD_HEAD]; current !== null; current = current[NEXT]) {
+			// Note: current can be an LView or an LContainer instance, but here we are only interested
+			// in LContainer. We can tell it's an LContainer because its length is less than the LView
+			// header.
+			if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
+				/** @type {?} */
+				const container = (/** @type {?} */ (current));
+				for (let i = 0; i < container[VIEW_REFS].length; i++) {
+					/** @type {?} */
+					const dynamicViewData = container[VIEW_REFS][i];
+
+					viewLoop.nextCurrent = current[NEXT];
+					setNextLView({
+						lView: dynamicViewData,
+						currentIndex: 0,
+						children: [],
+						parent: viewLoop,
+						isRoot: false
+					});
+					return;
+				}
+			}
+		}
+		viewLoop.checkedDynamicComponents = true;
+	}
 
 	// check child components
-
 	const components = viewLoop.lView[TVIEW].components;
 
 	if (!components) {
@@ -177,6 +203,7 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 		// Done with looping the components, need to go one up and set prev lView
 		if (!viewLoop.isRoot) {
 			setNextLView(viewLoop.parent);
+			return;
 		} else {
 			console.log('done', viewLoop);
 		}
@@ -204,8 +231,16 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 		parent: viewLoop,
 		isRoot: false
 	};
-	viewLoop.children.push(newCurrentTree);
+	addChildToParent(viewLoop, newCurrentTree);
 	currentTree = newCurrentTree;
+}
+
+function addChildToParent(viewLoop: ViewLoop, treeToAdd: ViewLoop) {
+	if(viewLoop.lView[HOST]) {
+		viewLoop.children.push(treeToAdd);
+	} else {
+		addChildToParent(viewLoop.parent, treeToAdd);
+	}
 }
 
 function viewAttachedToChangeDetector(view) {
