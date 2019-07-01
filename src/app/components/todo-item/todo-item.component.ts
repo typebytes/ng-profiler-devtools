@@ -13,6 +13,7 @@ import { Todo } from '../todo/todo.model';
                (keyup.enter)="update.emit(currentTodo)"
                (keyup.esc)="cancelEdit.emit()"
                class="edit">
+		{{todo}}
 	`,
 	styleUrls: ['./todo-item.component.css']
 })

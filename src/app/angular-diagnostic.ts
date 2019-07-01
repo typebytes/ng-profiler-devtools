@@ -2,7 +2,21 @@
 // window.setTimeout = function(...args) {
 //
 // };
-import { LView, MONKEY_PATCH_KEY_NAME, RootContext } from './types/angular_core';
+import {
+	CONTEXT,
+	FLAGS,
+	HOST,
+	LContainer,
+	LContext,
+	LView,
+	LViewFlags,
+	MONKEY_PATCH_KEY_NAME,
+	RootContext,
+	TView,
+	TVIEW,
+	TYPE
+} from './types/angular_core';
+import { ACTIVE_INDEX, CHILD_HEAD, HEADER_OFFSET, NEXT, VIEW_REFS } from '../assets/types/angular_core';
 
 declare const Zone;
 
@@ -268,7 +282,7 @@ const refs = {};
 
 const tracer = new Tracer();
 
-const monkeyPatchTemplate = (instance, isRoot = false) => {
+const monkeyPatchTemplate = (instance: LView, isRoot = false) => {
 	const origTemplate = instance[1].template;
 	instance[1].template = function (...args) {
 		console.debug('Calling the original template function');
@@ -303,58 +317,152 @@ const monkeyPatchTemplate = (instance, isRoot = false) => {
 		// Zone.root.run(runOutsideZone);
 	};
 };
+//
+// const loopComponents = (parentNode) => {
+// 	const components = parentNode[1].components;
+// 	if (!components) {
+// 		return;
+// 	}
+// 	for (let i = 0; i < components.length; i++) {
+// 		console.log('found component ' + parentNode[components[i]][0].tagName);
+// 		monkeyPatchTemplate(parentNode[components[i]]);
+// 		loopComponents(parentNode[components[i]]);
+// 	}
+// };
 
-const loopComponents = (parentNode) => {
-	const components = parentNode[1].components;
-	if (!components) {
+const findRootNode = (node) => {
+	if (!node || !node.childNodes) {
 		return;
 	}
-	for (let i = 0; i < components.length; i++) {
-		console.log('found component ' + parentNode[components[i]][0].tagName);
-		monkeyPatchTemplate(parentNode[components[i]]);
-		loopComponents(parentNode[components[i]]);
+	const childNodes = node.childNodes;
+	for (let i = 0; i < childNodes.length; i++) {
+		const childNode = childNodes[i];
+		if (childNode[MONKEY_PATCH_KEY_NAME]) {
+			// const instance = childNode.__ngContext__.debug._raw_lView[20];
+			// monkeyPatchTemplate(instance, true);
+			// loopComponents(instance);
+			const rootLView: LView = childNode[MONKEY_PATCH_KEY_NAME].debug._raw_lView;
+			monkeyPatchRootTree(rootLView[CONTEXT] as RootContext);
+		} else {
+			findRootNode(childNode);
+		}
 	}
 };
 
-const findRootNode = (node) => {
-		if (!node || !node.childNodes) {
-			return;
+console.log('timeout!');
+
+export function start() {
+	setTimeout(() => {
+		console.debug('booting the plugin');
+
+		findRootNode(document.body);
+	}, 2000);
+}
+
+export function getComponentViewByIndex(nodeIndex: number, hostView: LView): LView {
+	// Could be an LView or an LContainer. If LContainer, unwrap to find LView.
+	const slotValue = hostView[nodeIndex];
+	const lView = isLView(slotValue) ? slotValue : slotValue[HOST];
+	return lView;
+}
+
+export function isLView(value: any | LView | LContainer | any | {} | null):
+	value is LView {
+	return Array.isArray(value) && typeof value[TYPE] === 'object';
+}
+
+/**
+ * Gets the child lView from the parent, monkey patches the template function and does the same for its children
+ *
+ * @param adjustedElementIndex
+ * @param lView
+ */
+function componentRefresh(adjustedElementIndex: number, lView: LView) {
+	const childLView = getComponentViewByIndex(adjustedElementIndex, lView);
+	console.log(childLView[HOST].tagName);
+	monkeyPatchTemplate(childLView, false);
+	monkeyPatchDescendantViews(childLView);
+}
+
+/** Refreshes child components in the current view. */
+function monkeyPatchChildComponents(components: number[] | null, lView: LView): void {
+	if (components != null) {
+		for (let i = 0; i < components.length; i++) {
+			componentRefresh(components[i], lView);
 		}
-		const childNodes = node.childNodes;
-		for (let i = 0; i < childNodes.length; i++) {
-			const childNode = childNodes[i];
-			if (childNode.__ngContext__) {
-				const instance = childNode.__ngContext__.debug._raw_lView[20];
-				monkeyPatchTemplate(instance, true);
-				loopComponents(instance);
-			} else {
-				findRootNode(childNode);
+	}
+}
+
+
+function refreshDynamicEmbeddedViews(lView) {
+	for (let current: LContainer = lView[CHILD_HEAD]; current !== null; current = current[NEXT]) {
+		// Note: current can be an LView or an LContainer instance, but here we are only interested
+		// in LContainer. We can tell it's an LContainer because its length is less than the LView
+		// header.
+		if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
+			/** @type {?} */
+			const container = (/** @type {?} */ (current));
+			for (let i = 0; i < container[VIEW_REFS].length; i++) {
+				/** @type {?} */
+				const dynamicViewData = container[VIEW_REFS][i];
+				// Should be the ngFor context
+				console.log(dynamicViewData);
+				// renderEmbeddedTemplate(dynamicViewData, dynamicViewData[TVIEW], (/** @type {?} */ (dynamicViewData[CONTEXT])));
 			}
 		}
 	}
-;
+}
 
-setTimeout(() => {
-	console.debug('booting the plugin');
 
-	findRootNode(document.body);
-}, 2000);
+export function monkeyPatchDescendantViews(lView: LView) {
+	const tView: TView = lView[TVIEW];
 
-export const root = (rootContext: RootContext) => {
+	const creationMode = isCreationMode(lView);
+
+	monkeyPatchChildComponents(tView.components, lView);
+	refreshDynamicEmbeddedViews(lView);
+}
+
+/**
+ * Will loop over the root components and monkey patch all the template functions
+ *
+ * @param rootContext
+ */
+export function monkeyPatchRootTree(rootContext: RootContext) {
 	for (let i = 0; i < rootContext.components.length; i++) {
 		const rootComponent = rootContext.components[i];
+		monkeyPatchDescendantViews(readPatchedLView(rootComponent));
 	}
 }
 
-export function readPatchedData(target: any): LView|LContext|null {
+/**
+ * Will read the __ngContext__ property from a target
+ *
+ * @param target
+ */
+export function readPatchedData(target: any): LView | LContext | null {
 	return target[MONKEY_PATCH_KEY_NAME];
 }
 
-export function readPatchedLView(target: any): LView|null {
+/**
+ * Gets the LView from a target
+ *
+ * @param target
+ */
+export function readPatchedLView(target: any): LView | null {
 	const value = readPatchedData(target);
 	if (value) {
 		return Array.isArray(value) ? value : (value as LContext).lView;
 	}
 	return null;
+}
+
+/**
+ * Checks if a view is in creation mode
+ *
+ * @param view
+ */
+export function isCreationMode(view: LView): boolean {
+	return (view[FLAGS] & LViewFlags.CreationMode) === LViewFlags.CreationMode;
 }
 

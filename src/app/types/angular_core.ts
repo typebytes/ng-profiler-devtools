@@ -60,12 +60,6 @@ export const PREORDER_HOOK_FLAGS = 18;
 /** Size of LView's header. Necessary to adjust for it when setting slots.  */
 export const HEADER_OFFSET = 20;
 
-export const ACTIVE_INDEX = 2;
-// PARENT, NEXT, QUERIES and T_HOST are indices 3, 4, 5 and 6.
-// As we already have these constants in LView, we don't need to re-create them.
-export const NATIVE = 7;
-export const VIEW_REFS = 8;
-
 /**
  * Special location which allows easy identification of type. If we have an array which was
  * retrieved from the `LView` and that array has `true` at `TYPE` location, we know it is

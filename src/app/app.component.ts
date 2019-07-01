@@ -1,4 +1,5 @@
 import { Component, NgZone } from '@angular/core';
+import { start } from './angular-diagnostic';
 
 @Component({
 	selector: 'app-root',
@@ -6,7 +7,7 @@ import { Component, NgZone } from '@angular/core';
 })
 export class AppComponent {
 
-	constructor(private zone: NgZone) {
-		(window as any).ngZone = zone;
+	constructor() {
+		start();
 	}
 }

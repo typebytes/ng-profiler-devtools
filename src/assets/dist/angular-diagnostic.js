@@ -1,47 +1,13 @@
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __spread = (this && this.__spread) || function () {
-    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
-    return ar;
-};
-var CANVAS_NODE_ID = 'TraceUpdatesWebNodePresenter';
-var OUTLINE_COLOR = '#f0f0f0';
-var COLORS = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// const origSetTimeout = window.setTimeout;
+// window.setTimeout = function(...args) {
+//
+// };
+const angular_core_1 = require("./types/angular_core");
+const CANVAS_NODE_ID = 'TraceUpdatesWebNodePresenter';
+const OUTLINE_COLOR = '#f0f0f0';
+const COLORS = [
     // coolest
     '#55cef6',
     '#55f67b',
@@ -52,14 +18,13 @@ var COLORS = [
     // hottest
     '#ff0000',
 ];
-var HOTTEST_COLOR = COLORS[COLORS.length - 1];
-var DURATION = 250;
-var Tracer = /** @class */ (function () {
-    function Tracer() {
+const HOTTEST_COLOR = COLORS[COLORS.length - 1];
+const DURATION = 250;
+class Tracer {
+    constructor() {
         this._pool = new Map();
     }
-    Tracer.prototype.present = function (tagName, measurement) {
-        var _this = this;
+    present(tagName, measurement) {
         var data;
         if (this._pool.has(tagName)) {
             console.log('old measurement');
@@ -67,45 +32,33 @@ var Tracer = /** @class */ (function () {
         }
         else {
             console.log('new measurement');
-            data = __assign({ hit: 0 }, measurement);
+            data = Object.assign({ hit: 0 }, measurement);
         }
-        data = __assign({}, data, { expiration: Date.now() + DURATION, hit: data.hit + 1 });
+        data = Object.assign({}, data, { expiration: Date.now() + DURATION, hit: data.hit + 1 });
         this._pool = this._pool.set(tagName, data);
         if (this._drawing) {
             return;
         }
         this._drawing = true;
-        Zone.root.run(function () {
-            requestAnimationFrame(_this._draw.bind(_this));
+        Zone.root.run(() => {
+            requestAnimationFrame(this._draw.bind(this));
         });
-    };
-    Tracer.prototype._draw = function () {
-        var _this = this;
-        var e_1, _a;
+    }
+    _draw() {
         var now = Date.now();
         var minExpiration = Number.MAX_VALUE;
-        var temp = new Map();
-        try {
-            for (var _b = __values(this._pool.entries()), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var _d = __read(_c.value, 2), tagName = _d[0], data = _d[1];
-                if (data.expiration < now) {
-                    // already passed the expiration time.
-                }
-                else {
-                    // TODO what does this even do?
-                    // console.log('setting', minExpiration);
-                    minExpiration = Math.min(data.expiration, minExpiration);
-                    // console.log('setting', minExpiration);
-                    temp.set(tagName, data);
-                }
+        const temp = new Map();
+        for (let [tagName, data] of this._pool.entries()) {
+            if (data.expiration < now) {
+                // already passed the expiration time.
             }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            else {
+                // TODO what does this even do?
+                // console.log('setting', minExpiration);
+                minExpiration = Math.min(data.expiration, minExpiration);
+                // console.log('setting', minExpiration);
+                temp.set(tagName, data);
             }
-            finally { if (e_1) throw e_1.error; }
         }
         this._pool = temp;
         this.drawImpl(this._pool);
@@ -114,43 +67,32 @@ var Tracer = /** @class */ (function () {
             if (this._clearTimer != null) {
                 clearTimeout(this._clearTimer);
             }
-            this._clearTimer = Zone.root.run(function () {
-                setTimeout(_this._redraw.bind(_this), minExpiration - now);
+            this._clearTimer = Zone.root.run(() => {
+                setTimeout(this._redraw.bind(this), minExpiration - now);
             });
         }
         this._drawing = false;
-    };
-    Tracer.prototype._redraw = function () {
+    }
+    _redraw() {
         this._clearTimer = null;
         if (!this._drawing && this._pool.size > 0) {
             this._drawing = true;
             this._draw();
         }
-    };
-    Tracer.prototype.drawImpl = function (pool) {
-        var e_2, _a;
+    }
+    drawImpl(pool) {
         this._ensureCanvas();
         var canvas = this._canvas;
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         console.log(pool);
-        try {
-            for (var _b = __values(pool.entries()), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var _d = __read(_c.value, 2), tagName = _d[0], data = _d[1];
-                console.log(data.hit);
-                var color = COLORS[data.hit - 1] || HOTTEST_COLOR;
-                drawBorder(ctx, data, 1, color);
-            }
+        for (const [tagName, data] of pool.entries()) {
+            console.log(data.hit);
+            const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
+            drawBorder(ctx, data, 1, color);
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_2) throw e_2.error; }
-        }
-    };
-    Tracer.prototype.clearImpl = function () {
+    }
+    clearImpl() {
         var canvas = this._canvas;
         if (canvas === null) {
             return;
@@ -162,8 +104,8 @@ var Tracer = /** @class */ (function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.parentNode.removeChild(canvas);
         this._canvas = null;
-    };
-    Tracer.prototype._ensureCanvas = function () {
+    }
+    _ensureCanvas() {
         var canvas = this._canvas;
         if (canvas === null || canvas === undefined) {
             canvas =
@@ -172,16 +114,25 @@ var Tracer = /** @class */ (function () {
             canvas.id = CANVAS_NODE_ID;
             canvas.width = window.screen.availWidth;
             canvas.height = window.screen.availHeight;
-            canvas.style.cssText = "\n        xx-background-color: red;\n        xx-opacity: 0.5;\n        bottom: 0;\n        left: 0;\n        pointer-events: none;\n        position: fixed;\n        right: 0;\n        top: 0;\n        z-index: 1000000000;\n      ";
+            canvas.style.cssText = `
+        xx-background-color: red;
+        xx-opacity: 0.5;
+        bottom: 0;
+        left: 0;
+        pointer-events: none;
+        position: fixed;
+        right: 0;
+        top: 0;
+        z-index: 1000000000;
+      `;
         }
         if (!canvas.parentNode) {
             var root = window.document.documentElement;
             root.insertBefore(canvas, root.firstChild);
         }
         this._canvas = canvas;
-    };
-    return Tracer;
-}());
+    }
+}
 function drawBorder(ctx, measurement, borderWidth, borderColor) {
     // outline
     ctx.lineWidth = 1;
@@ -202,7 +153,7 @@ function drawBorder(ctx, measurement, borderWidth, borderColor) {
     ctx.strokeRect(measurement.left + Math.floor(borderWidth / 2), measurement.top + Math.floor(borderWidth / 2), measurement.width - borderWidth, measurement.height - borderWidth);
     ctx.setLineDash([0]);
 }
-var borderRemovals = [];
+let borderRemovals = [];
 // export type Measurement = {
 //     bottom: number,
 //     expiration: number,
@@ -215,7 +166,7 @@ var borderRemovals = [];
 //     top: number,
 //     width: number,
 // };
-var createMeasurement = function (rect) {
+const createMeasurement = (rect) => {
     return {
         left: rect.left,
         top: rect.top,
@@ -223,8 +174,8 @@ var createMeasurement = function (rect) {
         height: rect.height,
     };
 };
-var createDiv = function (rect, spanText) {
-    var div = document.createElement('div');
+const createDiv = (rect, spanText) => {
+    const div = document.createElement('div');
     div.style.position = 'fixed';
     div.style.height = rect.height + 1 + 'px';
     div.style.width = rect.width + 1 + 'px';
@@ -232,7 +183,7 @@ var createDiv = function (rect, spanText) {
     div.style.left = rect.left + 'px';
     div.style.border = '1px solid blue';
     div.style.animation = 'hide 15000ms forwards';
-    var span = document.createElement('span');
+    const span = document.createElement('span');
     span.style.position = 'fixed';
     span.style.top = rect.top + 'px';
     span.style.left = rect.left + 'px';
@@ -240,26 +191,21 @@ var createDiv = function (rect, spanText) {
     div.appendChild(span);
     return div;
 };
-var refs = {};
-var tracer = new Tracer();
-var monkeyPatchTemplate = function (instance, isRoot) {
-    if (isRoot === void 0) { isRoot = false; }
-    var origTemplate = instance[1].template;
-    instance[1].template = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
+const refs = {};
+const tracer = new Tracer();
+const monkeyPatchTemplate = (instance, isRoot = false) => {
+    const origTemplate = instance[1].template;
+    instance[1].template = function (...args) {
         console.debug('Calling the original template function');
-        origTemplate.apply(void 0, __spread(args));
+        origTemplate(...args);
         console.debug('After the original template function');
-        var tagName = instance[0].tagName;
+        const tagName = instance[0].tagName;
         console.log('CD for ', tagName);
         // if (refs[tagName]) {
         //     document.body.removeChild(refs[tagName]);
         // }
-        Zone.root.run(function () {
-            setTimeout(function () { return tracer.present(tagName, createMeasurement(instance[0].getBoundingClientRect())); });
+        Zone.root.run(() => {
+            setTimeout(() => tracer.present(tagName, createMeasurement(instance[0].getBoundingClientRect())));
         });
         // const runOutsideZone = () => {
         //     setTimeout(() => {
@@ -280,35 +226,140 @@ var monkeyPatchTemplate = function (instance, isRoot) {
         // Zone.root.run(runOutsideZone);
     };
 };
-var loopComponents = function (parentNode) {
-    var components = parentNode[1].components;
-    if (!components) {
-        return;
-    }
-    for (var i = 0; i < components.length; i++) {
-        console.log('found component ' + parentNode[components[i]][0].tagName);
-        monkeyPatchTemplate(parentNode[components[i]]);
-        loopComponents(parentNode[components[i]]);
-    }
-};
-var findRootNode = function (node) {
+//
+// const loopComponents = (parentNode) => {
+// 	const components = parentNode[1].components;
+// 	if (!components) {
+// 		return;
+// 	}
+// 	for (let i = 0; i < components.length; i++) {
+// 		console.log('found component ' + parentNode[components[i]][0].tagName);
+// 		monkeyPatchTemplate(parentNode[components[i]]);
+// 		loopComponents(parentNode[components[i]]);
+// 	}
+// };
+const findRootNode = (node) => {
     if (!node || !node.childNodes) {
         return;
     }
-    var childNodes = node.childNodes;
-    for (var i = 0; i < childNodes.length; i++) {
-        var childNode = childNodes[i];
-        if (childNode.__ngContext__) {
-            var instance = childNode.__ngContext__.debug._raw_lView[20];
-            monkeyPatchTemplate(instance, true);
-            loopComponents(instance);
+    const childNodes = node.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        const childNode = childNodes[i];
+        if (childNode[angular_core_1.MONKEY_PATCH_KEY_NAME]) {
+            // const instance = childNode.__ngContext__.debug._raw_lView[20];
+            // monkeyPatchTemplate(instance, true);
+            // loopComponents(instance);
+            const rootLView = childNode[angular_core_1.MONKEY_PATCH_KEY_NAME].debug._raw_lView;
+            monkeyPatchRootTree(rootLView[angular_core_1.CONTEXT]);
         }
         else {
             findRootNode(childNode);
         }
     }
 };
-setTimeout(function () {
+console.log('timeout!');
+setTimeout(() => {
     console.debug('booting the plugin');
     findRootNode(document.body);
 }, 2000);
+function getComponentViewByIndex(nodeIndex, hostView) {
+    // Could be an LView or an LContainer. If LContainer, unwrap to find LView.
+    const slotValue = hostView[nodeIndex];
+    const lView = isLView(slotValue) ? slotValue : slotValue[angular_core_1.HOST];
+    return lView;
+}
+exports.getComponentViewByIndex = getComponentViewByIndex;
+function isLView(value) {
+    return Array.isArray(value) && typeof value[angular_core_1.TYPE] === 'object';
+}
+exports.isLView = isLView;
+/**
+ * Gets the child lView from the parent, monkey patches the template function and does the same for its children
+ *
+ * @param adjustedElementIndex
+ * @param lView
+ */
+function componentRefresh(adjustedElementIndex, lView) {
+    const childLView = getComponentViewByIndex(adjustedElementIndex, lView);
+    console.log(childLView);
+    monkeyPatchTemplate(childLView, false);
+    monkeyPatchDescendantViews(lView);
+}
+/** Refreshes child components in the current view. */
+function monkeyPatchChildComponents(components, lView) {
+    if (components != null) {
+        for (let i = 0; i < components.length; i++) {
+            componentRefresh(components[i], lView);
+        }
+    }
+}
+function monkeyPatchDescendantViews(lView) {
+    const tView = lView[angular_core_1.TVIEW];
+    const creationMode = isCreationMode(lView);
+    debugger;
+    monkeyPatchChildComponents(tView.components, lView);
+    refreshDynamicEmbeddedViews(lView);
+}
+exports.monkeyPatchDescendantViews = monkeyPatchDescendantViews;
+/**
+ * Will loop over the root components and monkey patch all the template functions
+ *
+ * @param rootContext
+ */
+function monkeyPatchRootTree(rootContext) {
+    for (let i = 0; i < rootContext.components.length; i++) {
+        const rootComponent = rootContext.components[i];
+        monkeyPatchDescendantViews(readPatchedLView(rootComponent));
+    }
+}
+exports.monkeyPatchRootTree = monkeyPatchRootTree;
+/**
+ * Will read the __ngContext__ property from a target
+ *
+ * @param target
+ */
+function readPatchedData(target) {
+    return target[angular_core_1.MONKEY_PATCH_KEY_NAME];
+}
+exports.readPatchedData = readPatchedData;
+/**
+ * Gets the LView from a target
+ *
+ * @param target
+ */
+function readPatchedLView(target) {
+    const value = readPatchedData(target);
+    if (value) {
+        return Array.isArray(value) ? value : value.lView;
+    }
+    return null;
+}
+exports.readPatchedLView = readPatchedLView;
+/**
+ * Checks if a view is in creation mode
+ *
+ * @param view
+ */
+function isCreationMode(view) {
+    return (view[angular_core_1.FLAGS] & 4 /* CreationMode */) === 4 /* CreationMode */;
+}
+exports.isCreationMode = isCreationMode;
+function refreshDynamicEmbeddedViews(lView) {
+    debugger;
+    for (let current = lView[angular_core_1.CHILD_HEAD]; current !== null; current = current[angular_core_1.NEXT]) {
+        // Note: current can be an LView or an LContainer instance, but here we are only interested
+        // in LContainer. We can tell it's an LContainer because its length is less than the LView
+        // header.
+        if (current.length < angular_core_1.HEADER_OFFSET && current[angular_core_1.ACTIVE_INDEX] === -1) {
+            /** @type {?} */
+            const container = ( /** @type {?} */(current));
+            for (let i = 0; i < container[angular_core_1.VIEW_REFS].length; i++) {
+                /** @type {?} */
+                const dynamicViewData = container[angular_core_1.VIEW_REFS][i];
+                debugger;
+                console.log(dynamicViewData);
+                // renderEmbeddedTemplate(dynamicViewData, dynamicViewData[TVIEW], (/** @type {?} */ (dynamicViewData[CONTEXT])));
+            }
+        }
+    }
+}
