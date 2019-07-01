@@ -10,7 +10,8 @@ import { TodoService } from '../../todo.service';
 @Component({
 	selector: 'app-todo',
 	templateUrl: './todo.component.html',
-	changeDetection: ChangeDetectionStrategy.OnPush
+	// changeDetection: ChangeDetectionStrategy.OnPush
+	providers: [TodoService]
 })
 export class TodoComponent implements OnInit, DoCheck, OnDestroy {
 
