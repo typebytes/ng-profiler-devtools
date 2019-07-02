@@ -1,9 +1,13 @@
 import { LView } from './types/angular_core';
 
+declare const Zone;
+
+// Id of the canvas node
 const CANVAS_NODE_ID = 'TraceUpdatesWebNodePresenter';
 
+// Outline color
 const OUTLINE_COLOR = '#f0f0f0';
-
+// Color values used in showing how 'hot' a certain rect is
 const COLORS = [
 	// coolest
 	'#55cef6',
@@ -15,29 +19,41 @@ const COLORS = [
 	// hottest
 	'#ff0000',
 ];
-
 const HOTTEST_COLOR = COLORS[COLORS.length - 1];
+
+// Duration of the rect being added
 const DURATION = 250;
-declare const Zone;
 
+interface TracingMeasurement {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+}
 
+interface TracingData {
+	hit: number;
+	tagName: string;
+	expiration: number;
+	measurement: TracingMeasurement;
+}
 
 export class Tracer {
-	_canvas;
-	_pool = new Map();
+	// Canvas reference
+	canvas: HTMLCanvasElement;
+	pool = new Map<LView, TracingData>();
 	_drawing;
 	_clearTimer;
 
-	present(lview: LView, tagName, measurement) {
-		console.log('updated', tagName, measurement);
-		var data;
-		if (this._pool.has(lview)) {
-			data = this._pool.get(lview);
+	present(lView: LView, tagName, measurement) {
+		let data;
+		if (this.pool.has(lView)) {
+			data = this.pool.get(lView);
 		} else {
 			data = {
 				hit: 0,
 				tagName,
-				...measurement
+				measurement
 			};
 		}
 
@@ -47,40 +63,38 @@ export class Tracer {
 			hit: data.hit + 1,
 		};
 
-		this._pool = this._pool.set(lview, data);
+		this.pool = this.pool.set(lView, data);
 
+		// If we're already drawing, no use in setting a new event
 		if (this._drawing) {
 			return;
 		}
 
 		this._drawing = true;
+		// Draw on the next animationFrame, use Zone to make sure it doesn't trigger a CD cycle in Angular
 		Zone.root.run(() => {
 			requestAnimationFrame(this._draw.bind(this));
 		});
 	}
 
 	_draw() {
-		var now = Date.now();
-		var minExpiration = Number.MAX_VALUE;
+		const now = Date.now();
+		let minExpiration = Number.MAX_VALUE;
 
-		const temp = new Map();
-		for (let [lView, data] of this._pool.entries()) {
-			if (data.expiration < now) {
-				// already passed the expiration time.
-			} else {
-				// TODO what does this even do?
-				// console.log('setting', minExpiration);
+		// Calculate the 'nearest' expiration date
+		// Remove all the ones that already expired
+		const temp = new Map<LView, TracingData>();
+		for (const [lView, data] of this.pool.entries()) {
+			if (data.expiration > now) {
 				minExpiration = Math.min(data.expiration, minExpiration);
-				// console.log('setting', minExpiration);
 				temp.set(lView, data);
 			}
 		}
-		this._pool = temp;
+		this.pool = temp;
 
-		this.drawImpl(this._pool);
+		this.drawImpl(this.pool);
 
-		if (this._pool.size > 0) {
-			// debugger;
+		if (this.pool.size > 0) {
 			if (this._clearTimer != null) {
 				clearTimeout(this._clearTimer);
 			}
@@ -94,16 +108,16 @@ export class Tracer {
 
 	_redraw() {
 		this._clearTimer = null;
-		if (!this._drawing && this._pool.size > 0) {
+		if (!this._drawing && this.pool.size > 0) {
 			this._drawing = true;
 			this._draw();
 		}
 	}
 
-	drawImpl(pool) {
+	drawImpl(pool: Map<LView, TracingData>) {
 		this._ensureCanvas();
-		var canvas = this._canvas;
-		var ctx = canvas.getContext('2d');
+		const canvas = this.canvas;
+		const ctx = canvas.getContext('2d');
 		ctx.clearRect(
 			0,
 			0,
@@ -112,13 +126,13 @@ export class Tracer {
 		);
 		for (const [lView, data] of pool.entries()) {
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
-			drawBorder(ctx, data, 1, color);
+			drawBorder(ctx, data.measurement, 1, color);
 		}
 	}
 
-
+	// TODO: figure out when to call this one
 	clearImpl() {
-		var canvas = this._canvas;
+		const canvas = this.canvas;
 		if (canvas === null) {
 			return;
 		}
@@ -127,7 +141,7 @@ export class Tracer {
 			return;
 		}
 
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.clearRect(
 			0,
 			0,
@@ -136,14 +150,14 @@ export class Tracer {
 		);
 
 		canvas.parentNode.removeChild(canvas);
-		this._canvas = null;
+		this.canvas = null;
 	}
 
 	_ensureCanvas() {
-		var canvas = this._canvas;
+		let canvas = this.canvas;
 		if (canvas === null || canvas === undefined) {
 			canvas =
-				window.document.getElementById(CANVAS_NODE_ID) ||
+				window.document.getElementById(CANVAS_NODE_ID) as HTMLCanvasElement ||
 				window.document.createElement('canvas');
 
 			canvas.id = CANVAS_NODE_ID;
@@ -163,14 +177,14 @@ export class Tracer {
 		}
 
 		if (!canvas.parentNode) {
-			var root = window.document.documentElement;
+			const root = window.document.documentElement;
 			root.insertBefore(canvas, root.firstChild);
 		}
-		this._canvas = canvas;
+		this.canvas = canvas;
 	}
 }
 
-function drawBorder(ctx, measurement, borderWidth, borderColor) {
+function drawBorder(ctx: CanvasRenderingContext2D, measurement: TracingMeasurement, borderWidth: number, borderColor: string) {
 	// outline
 	ctx.lineWidth = 1;
 	ctx.strokeStyle = OUTLINE_COLOR;
@@ -193,15 +207,10 @@ function drawBorder(ctx, measurement, borderWidth, borderColor) {
 	);
 	ctx.strokeStyle = borderColor;
 
-
-	// if (measurement.should_update) {
 	ctx.setLineDash([0]);
-	// } else {
-	//     ctx.setLineDash([0]);
-	// }
 
 	// border
-	ctx.lineWidth = '' + borderWidth;
+	ctx.lineWidth = borderWidth;
 	ctx.strokeRect(
 		measurement.left + Math.floor(borderWidth / 2),
 		measurement.top + Math.floor(borderWidth / 2),
@@ -212,49 +221,11 @@ function drawBorder(ctx, measurement, borderWidth, borderColor) {
 	ctx.setLineDash([0]);
 }
 
-let borderRemovals = [];
-
-
-// export type Measurement = {
-//     bottom: number,
-//     expiration: number,
-//     height: number,
-//     id: string,
-//     left: number,
-//     right: number,
-//     scrollX: number,
-//     scrollY: number,
-//     top: number,
-//     width: number,
-// };
-
-export const createMeasurement = (rect) => {
+export function createMeasurement(rect: ClientRect) {
 	return {
 		left: rect.left,
 		top: rect.top,
 		width: rect.width,
 		height: rect.height,
 	};
-};
-
-const createDiv = (rect, spanText) => {
-	const div = document.createElement('div');
-	div.style.position = 'fixed';
-	div.style.height = rect.height + 1 + 'px';
-	div.style.width = rect.width + 1 + 'px';
-	div.style.top = rect.top + 'px';
-	div.style.left = rect.left + 'px';
-	div.style.border = '1px solid blue';
-	div.style.animation = 'hide 15000ms forwards';
-
-	const span = document.createElement('span');
-	span.style.position = 'fixed';
-	span.style.top = rect.top + 'px';
-	span.style.left = rect.left + 'px';
-	span.textContent = spanText;
-
-	div.appendChild(span);
-	return div;
-};
-
-const refs = {};
+}

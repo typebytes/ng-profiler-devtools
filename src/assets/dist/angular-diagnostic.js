@@ -22,20 +22,20 @@ const HOTTEST_COLOR = COLORS[COLORS.length - 1];
 const DURATION = 250;
 class Tracer {
     constructor() {
-        this._pool = new Map();
+        this.pool = new Map();
     }
     present(tagName, measurement) {
         var data;
-        if (this._pool.has(tagName)) {
+        if (this.pool.has(tagName)) {
             console.log('old measurement');
-            data = this._pool.get(tagName);
+            data = this.pool.get(tagName);
         }
         else {
             console.log('new measurement');
             data = Object.assign({ hit: 0 }, measurement);
         }
         data = Object.assign({}, data, { expiration: Date.now() + DURATION, hit: data.hit + 1 });
-        this._pool = this._pool.set(tagName, data);
+        this.pool = this.pool.set(tagName, data);
         if (this._drawing) {
             return;
         }
@@ -48,7 +48,7 @@ class Tracer {
         var now = Date.now();
         var minExpiration = Number.MAX_VALUE;
         const temp = new Map();
-        for (let [tagName, data] of this._pool.entries()) {
+        for (let [tagName, data] of this.pool.entries()) {
             if (data.expiration < now) {
                 // already passed the expiration time.
             }
@@ -60,9 +60,9 @@ class Tracer {
                 temp.set(tagName, data);
             }
         }
-        this._pool = temp;
-        this.drawImpl(this._pool);
-        if (this._pool.size > 0) {
+        this.pool = temp;
+        this.drawImpl(this.pool);
+        if (this.pool.size > 0) {
             // debugger;
             if (this._clearTimer != null) {
                 clearTimeout(this._clearTimer);
@@ -75,14 +75,14 @@ class Tracer {
     }
     _redraw() {
         this._clearTimer = null;
-        if (!this._drawing && this._pool.size > 0) {
+        if (!this._drawing && this.pool.size > 0) {
             this._drawing = true;
             this._draw();
         }
     }
     drawImpl(pool) {
         this._ensureCanvas();
-        var canvas = this._canvas;
+        var canvas = this.canvas;
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         console.log(pool);
@@ -93,7 +93,7 @@ class Tracer {
         }
     }
     clearImpl() {
-        var canvas = this._canvas;
+        var canvas = this.canvas;
         if (canvas === null) {
             return;
         }
@@ -103,10 +103,10 @@ class Tracer {
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.parentNode.removeChild(canvas);
-        this._canvas = null;
+        this.canvas = null;
     }
     _ensureCanvas() {
-        var canvas = this._canvas;
+        var canvas = this.canvas;
         if (canvas === null || canvas === undefined) {
             canvas =
                 window.document.getElementById(CANVAS_NODE_ID) ||
@@ -130,7 +130,7 @@ class Tracer {
             var root = window.document.documentElement;
             root.insertBefore(canvas, root.firstChild);
         }
-        this._canvas = canvas;
+        this.canvas = canvas;
     }
 }
 function drawBorder(ctx, measurement, borderWidth, borderColor) {

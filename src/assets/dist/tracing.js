@@ -18,14 +18,14 @@
 // const DURATION = 250;
 //
 // export class Tracer {
-//     _canvas;
-//     _pool = new Map();
+//     canvas;
+//     pool = new Map();
 //     _drawing;
 //
 //     present(measurement) {
 //         var data;
-//         if (this._pool.has(measurement)) {
-//             data = this._pool.get(measurement);
+//         if (this.pool.has(measurement)) {
+//             data = this.pool.get(measurement);
 //         } else {
 //             data = {};
 //         }
@@ -35,7 +35,7 @@
 //             hit: data.hit + 1,
 //         };
 //
-//         this._pool = this._pool.set(measurement, data);
+//         this.pool = this.pool.set(measurement, data);
 //
 //         if (this._drawing) {
 //             return;
@@ -49,11 +49,11 @@
 //         var now = Date.now();
 //         var minExpiration = Number.MAX_VALUE;
 //
-//         this._pool = this._pool.forEach(_pool => {
-//             for (const [measurement, data] of _pool.entries()) {
+//         this.pool = this.pool.forEach(pool => {
+//             for (const [measurement, data] of pool.entries()) {
 //                 if (data.expiration < now) {
 //                     // already passed the expiration time.
-//                     _pool.delete(measurement);
+//                     pool.delete(measurement);
 //                 } else {
 //                     // TODO what does this even do?
 //                     minExpiration = Math.min(data.expiration, minExpiration);
@@ -61,9 +61,9 @@
 //             }
 //         });
 //
-//         this.drawImpl(this._pool);
+//         this.drawImpl(this.pool);
 //
-//         if (this._pool.size > 0) {
+//         if (this.pool.size > 0) {
 //             if (this._clearTimer != null) {
 //                 clearTimeout(this._clearTimer);
 //             }
@@ -77,7 +77,7 @@
 //
 //     _redraw() {
 //         this._clearTimer = null;
-//         if (!this._drawing && this._pool.size > 0) {
+//         if (!this._drawing && this.pool.size > 0) {
 //             this._drawing = true;
 //             this._draw();
 //         }
@@ -85,7 +85,7 @@
 //
 //     drawImpl(pool) {
 //         this._ensureCanvas();
-//         var canvas = this._canvas;
+//         var canvas = this.canvas;
 //         var ctx = canvas.getContext('2d');
 //         ctx.clearRect(
 //             0,
@@ -102,7 +102,7 @@
 //
 //
 //     clearImpl() {
-//         var canvas = this._canvas;
+//         var canvas = this.canvas;
 //         if (canvas === null) {
 //             return;
 //         }
@@ -120,11 +120,11 @@
 //         );
 //
 //         canvas.parentNode.removeChild(canvas);
-//         this._canvas = null;
+//         this.canvas = null;
 //     }
 //
 //     _ensureCanvas() {
-//         var canvas = this._canvas;
+//         var canvas = this.canvas;
 //         if (canvas === null) {
 //             canvas =
 //                 window.document.getElementById(CANVAS_NODE_ID) ||
@@ -150,7 +150,7 @@
 //             var root = window.document.documentElement;
 //             root.insertBefore(canvas, root.firstChild);
 //         }
-//         this._canvas = canvas;
+//         this.canvas = canvas;
 //     }
 // }
 //

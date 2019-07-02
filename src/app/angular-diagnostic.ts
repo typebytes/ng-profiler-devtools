@@ -15,12 +15,13 @@ import {
 	TView,
 	TVIEW,
 	TYPE
-} from './types/angular_core';
+} from './lib/types/angular_core';
 import { ACTIVE_INDEX, CHILD_HEAD, HEADER_OFFSET, NEXT, VIEW_REFS } from '../assets/types/angular_core';
-import { createMeasurement, Tracer } from './tracing';
+import { createMeasurement, Tracer } from './lib/tracing';
+import { TreeViewItem } from './lib/lview-pointer-manager';
+import { getComponentViewByIndex } from './lib/util';
 
 declare const Zone;
-
 
 const tracer = new Tracer();
 
@@ -28,8 +29,10 @@ const tracer = new Tracer();
  * This is the next lView that will be used by a certain template function
  */
 let stateLView: LView;
-
 let isFirstExecution = false;
+let rootTree: TreeViewItem;
+let currentTree: TreeViewItem;
+
 const monkeyPatchTemplate = (tView: TView) => {
 	let rootLView;
 	if (!isFirstExecution) {
@@ -53,22 +56,25 @@ const monkeyPatchTemplate = (tView: TView) => {
 		}
 		const currentLView = rootLView ? rootLView : stateLView;
 		const tagName = currentLView[HOST].tagName;
-		console.log('CD for ', tagName, args[0]);
+		console.log('CD for ', args[0] === 2 ? tagName : 'check the next statement :)', args[0]);
 		console.debug(currentLView);
 		origTemplate(...args);
 		// time to walk the tree from this instance to see if new dynamic
 		// views were created
-		console.log(currentLView);
+		console.debug(currentLView);
 		monkeyPatchDescendantViews(currentLView, true);
 
 		console.debug('Predict the next lView after ', tagName);
-		Zone.root.run(() => {
-			console.log('updated', currentLView);
-			setTimeout(() => tracer.present(currentLView, tagName, createMeasurement(currentLView[0].getBoundingClientRect())));
-		});
+		if (args[0] === 2) {
+			Zone.root.run(() => {
+				console.debug('updated', currentLView);
+				setTimeout(() => tracer.present(currentLView, tagName, createMeasurement(currentLView[0].getBoundingClientRect())));
+			});
+		}
 	};
 	(tView.template as any).__patched = true;
 };
+
 
 const findRootNode = (node) => {
 	if (!node || !node.childNodes) {
@@ -99,18 +105,6 @@ export function start() {
 	}, 2000);
 }
 
-export function getComponentViewByIndex(nodeIndex: number, hostView: LView): LView {
-	// Could be an LView or an LContainer. If LContainer, unwrap to find LView.
-	const slotValue = hostView[nodeIndex];
-	const lView = isLView(slotValue) ? slotValue : slotValue[HOST];
-	return lView;
-}
-
-export function isLView(value: any | LView | LContainer | any | {} | null):
-	value is LView {
-	return Array.isArray(value) && typeof value[TYPE] === 'object';
-}
-
 /**
  * Gets the child lView from the parent, monkey patches the template function and does the same for its children
  *
@@ -132,21 +126,6 @@ function monkeyPatchChildComponents(components: number[] | null, lView: LView): 
 	}
 }
 
-// TODO: properly name this
-interface ViewLoop {
-	lView: LView;
-	currentIndex: number;
-	children: ViewLoop[];
-	currentDynamicIndex?: number;
-	parent?: ViewLoop;
-	isRoot: boolean;
-	nextCurrent?: any;
-	checkedDynamicComponents?: boolean;
-}
-
-let rootTree: ViewLoop;
-let currentTree: ViewLoop;
-
 function resetState() {
 	rootTree = null;
 	currentTree = null;
@@ -158,7 +137,7 @@ function resetState() {
  * @param viewLoop
  * @param rootLView
  */
-function getNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
+function getNextLView(viewLoop?: TreeViewItem, rootLView?: LView) {
 	if (!rootTree) {
 		rootTree = {
 			lView: rootLView,
@@ -225,16 +204,16 @@ function getNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 	// - attached
 	// - detached and dirty
 	const potentialLView = viewLoop.lView[components[viewLoop.currentIndex]];
-	console.log('ref -> ', potentialLView);
+	console.debug('ref -> ', potentialLView);
 	if (!viewLoop.isRoot && !((viewAttachedToChangeDetector(potentialLView) || isCreationMode(potentialLView)) &&
 		potentialLView[FLAGS] & (16 /* CheckAlways */ | 64 /* Dirty */))) {
-		console.log('CHECKED -> ', potentialLView);
+		console.debug('CHECKED -> ', potentialLView);
 		viewLoop.currentIndex++;
 		getNextLView(viewLoop);
 		return;
 	}
 	stateLView = viewLoop.lView[components[viewLoop.currentIndex]] || viewLoop.lView;
-	console.log('Prediction is', stateLView[HOST]);
+	console.debug('Prediction is', stateLView[HOST]);
 	viewLoop.currentIndex++;
 	const newCurrentTree = {
 		lView: stateLView,
@@ -247,7 +226,7 @@ function getNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 	currentTree = newCurrentTree;
 }
 
-function addChildToParent(viewLoop: ViewLoop, treeToAdd: ViewLoop) {
+function addChildToParent(viewLoop: TreeViewItem, treeToAdd: TreeViewItem) {
 	if (viewLoop.lView[HOST]) {
 		viewLoop.children.push(treeToAdd);
 	} else {
@@ -286,6 +265,7 @@ export function monkeyPatchDescendantViews(lView: LView, onlyDynamic = false) {
 	const creationMode = isCreationMode(lView);
 
 	if (!onlyDynamic) {
+		console.log(tView.components);
 		monkeyPatchChildComponents(tView.components, lView);
 	}
 	refreshDynamicEmbeddedViews(lView);
