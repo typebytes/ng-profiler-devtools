@@ -45,23 +45,27 @@ const monkeyPatchTemplate = (tView: TView) => {
 	const origTemplate = tView.template;
 	console.debug('patching', tView.template);
 	tView.template = function (...args) {
+		// gets the next lView to be checked
 		rootLView && resetState();
+		// If not creation mode, the element doesn't exist yet so no lView to fetch yet!!! Will be fetched only during update mode
+		if (args[0] === 2) {
+			getNextLView(currentTree, rootLView);
+		}
 		const currentLView = rootLView ? rootLView : stateLView;
+		const tagName = currentLView[HOST].tagName;
+		console.log('CD for ', tagName, args[0]);
 		console.debug(currentLView);
 		origTemplate(...args);
 		// time to walk the tree from this instance to see if new dynamic
 		// views were created
 		console.log(currentLView);
 		monkeyPatchDescendantViews(currentLView, true);
-		const tagName = currentLView[HOST].tagName;
-		console.log('CD for ', tagName, args[0]);
 
 		console.debug('Predict the next lView after ', tagName);
 		Zone.root.run(() => {
 			console.log('updated', currentLView);
 			setTimeout(() => tracer.present(currentLView, tagName, createMeasurement(currentLView[0].getBoundingClientRect())));
 		});
-		setNextLView(currentTree, rootLView);
 	};
 	(tView.template as any).__patched = true;
 };
@@ -133,6 +137,7 @@ interface ViewLoop {
 	lView: LView;
 	currentIndex: number;
 	children: ViewLoop[];
+	currentDynamicIndex?: number;
 	parent?: ViewLoop;
 	isRoot: boolean;
 	nextCurrent?: any;
@@ -153,7 +158,7 @@ function resetState() {
  * @param viewLoop
  * @param rootLView
  */
-function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
+function getNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 	if (!rootTree) {
 		rootTree = {
 			lView: rootLView,
@@ -163,6 +168,7 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 		};
 		currentTree = rootTree;
 		viewLoop = rootTree;
+		return;
 	}
 	if (!viewLoop.checkedDynamicComponents) {
 		// first check dynamic embedded views
@@ -173,12 +179,18 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 			if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
 				/** @type {?} */
 				const container = (/** @type {?} */ (current));
-				for (let i = 0; i < container[VIEW_REFS].length; i++) {
+				for (let i = viewLoop.currentDynamicIndex ? viewLoop.currentDynamicIndex : 0; i < container[VIEW_REFS].length; i++) {
 					/** @type {?} */
 					const dynamicViewData = container[VIEW_REFS][i];
-
-					viewLoop.nextCurrent = current[NEXT];
-					setNextLView({
+					// if we've looped every element in this list, it doesn't make sense to loop it again, with the next iteration,
+					// we want to start from the next 'current'
+					if (i === container[VIEW_REFS].length - 1) {
+						viewLoop.nextCurrent = current[NEXT];
+					} else {
+						// In the other case, we need to keep a reference the index that we are currently at
+						viewLoop.currentDynamicIndex = i + 1;
+					}
+					getNextLView({
 						lView: dynamicViewData,
 						currentIndex: 0,
 						children: [],
@@ -196,13 +208,13 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 	const components = viewLoop.lView[TVIEW].components;
 
 	if (!components) {
-		setNextLView(viewLoop.parent);
+		getNextLView(viewLoop.parent);
 		return;
 	}
 	if (viewLoop.currentIndex >= components.length) {
 		// Done with looping the components, need to go one up and set prev lView
 		if (!viewLoop.isRoot) {
-			setNextLView(viewLoop.parent);
+			getNextLView(viewLoop.parent);
 			return;
 		} else {
 			console.log('done', viewLoop);
@@ -218,7 +230,7 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 		potentialLView[FLAGS] & (16 /* CheckAlways */ | 64 /* Dirty */))) {
 		console.log('CHECKED -> ', potentialLView);
 		viewLoop.currentIndex++;
-		setNextLView(viewLoop);
+		getNextLView(viewLoop);
 		return;
 	}
 	stateLView = viewLoop.lView[components[viewLoop.currentIndex]] || viewLoop.lView;
@@ -236,7 +248,7 @@ function setNextLView(viewLoop?: ViewLoop, rootLView?: LView) {
 }
 
 function addChildToParent(viewLoop: ViewLoop, treeToAdd: ViewLoop) {
-	if(viewLoop.lView[HOST]) {
+	if (viewLoop.lView[HOST]) {
 		viewLoop.children.push(treeToAdd);
 	} else {
 		addChildToParent(viewLoop.parent, treeToAdd);

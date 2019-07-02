@@ -26,7 +26,7 @@ import { Todo, TodoUtils } from '../todo/todo.model';
         </section>
 	`,
 	styleUrls: ['./todos-list.component.css'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	// changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodosListComponent implements DoCheck {
 	@Input() todos: Todo[];
