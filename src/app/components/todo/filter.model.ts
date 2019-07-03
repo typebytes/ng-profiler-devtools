@@ -1,7 +1,9 @@
-import {Todo} from './todo.model';
+import { Todo } from './todo.model';
 
 export enum Filter {
-	ALL = 'SHOW_ALL', ACTIVE = 'SHOW_ACTIVE', COMPLETED = 'SHOW_COMPLETED'
+	ALL = 'SHOW_ALL',
+	ACTIVE = 'SHOW_ACTIVE',
+	COMPLETED = 'SHOW_COMPLETED'
 }
 
 export class FilterUtil {

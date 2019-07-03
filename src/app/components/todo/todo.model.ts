@@ -11,7 +11,6 @@ export class Todo {
 }
 
 export class TodoUtils {
-
 	static copy(todo: Todo) {
 		const copy = new Todo(null, null);
 		this.copyProperties(todo, copy);

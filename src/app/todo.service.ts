@@ -4,7 +4,6 @@ import { Todo } from './components/todo/todo.model';
 
 @Injectable()
 export class TodoService {
-
 	private static STORAGE_KEY = 'todos-angular-5';
 	private lastInsertId = 0;
 	private todos: Todo[] = [];
@@ -32,40 +31,39 @@ export class TodoService {
 	}
 
 	update(todoToUpdate: Todo) {
-
 		this.save();
 	}
 
 	delete(todo: Todo) {
-		this.todos = this.todos.filter((t) => t !== todo);
+		this.todos = this.todos.filter(t => t !== todo);
 		this.save();
 	}
 
 	toggle(todoToUpdate: Todo) {
-		this.todos = this.todos.map((todo) => todo.id === todoToUpdate.id ? {...todo, completed: !todo.completed} : todo);
+		this.todos = this.todos.map(todo =>
+			todo.id === todoToUpdate.id
+				? { ...todo, completed: !todo.completed }
+				: todo
+		);
 		this.save();
 	}
 
 	toggleAll(completed: boolean) {
-		this.todos = this.todos.map((t) => ({...t, completed}));
+		this.todos = this.todos.map(t => ({ ...t, completed }));
 		this.save();
 	}
 
 	clearCompleted() {
-		this.todos = this.todos.filter((t) => !t.completed);
+		this.todos = this.todos.filter(t => !t.completed);
 		this.save();
 	}
 
 	remaining() {
-		return this.todos
-			.filter(t => !t.completed)
-			.length;
+		return this.todos.filter(t => !t.completed).length;
 	}
 
 	completed() {
-		return this.todos
-			.filter(t => t.completed)
-			.length;
+		return this.todos.filter(t => t.completed).length;
 	}
 
 	private fetch() {

@@ -17,7 +17,7 @@ const COLORS = [
 	'#f6a555',
 	'#f66855',
 	// hottest
-	'#ff0000',
+	'#ff0000'
 ];
 const HOTTEST_COLOR = COLORS[COLORS.length - 1];
 
@@ -60,7 +60,7 @@ export class Tracer {
 		data = {
 			...data,
 			expiration: Date.now() + DURATION,
-			hit: data.hit + 1,
+			hit: data.hit + 1
 		};
 
 		this.pool = this.pool.set(lView, data);
@@ -118,12 +118,7 @@ export class Tracer {
 		this._ensureCanvas();
 		const canvas = this.canvas;
 		const ctx = canvas.getContext('2d');
-		ctx.clearRect(
-			0,
-			0,
-			canvas.width,
-			canvas.height
-		);
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		for (const [lView, data] of pool.entries()) {
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
 			drawBorder(ctx, data.measurement, 1, color);
@@ -142,12 +137,7 @@ export class Tracer {
 		}
 
 		const ctx = canvas.getContext('2d');
-		ctx.clearRect(
-			0,
-			0,
-			canvas.width,
-			canvas.height
-		);
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 		canvas.parentNode.removeChild(canvas);
 		this.canvas = null;
@@ -157,7 +147,7 @@ export class Tracer {
 		let canvas = this.canvas;
 		if (canvas === null || canvas === undefined) {
 			canvas =
-				window.document.getElementById(CANVAS_NODE_ID) as HTMLCanvasElement ||
+				(window.document.getElementById(CANVAS_NODE_ID) as HTMLCanvasElement) ||
 				window.document.createElement('canvas');
 
 			canvas.id = CANVAS_NODE_ID;
@@ -184,7 +174,12 @@ export class Tracer {
 	}
 }
 
-function drawBorder(ctx: CanvasRenderingContext2D, measurement: TracingMeasurement, borderWidth: number, borderColor: string) {
+function drawBorder(
+	ctx: CanvasRenderingContext2D,
+	measurement: TracingMeasurement,
+	borderWidth: number,
+	borderColor: string
+) {
 	// outline
 	ctx.lineWidth = 1;
 	ctx.strokeStyle = OUTLINE_COLOR;
@@ -193,7 +188,7 @@ function drawBorder(ctx: CanvasRenderingContext2D, measurement: TracingMeasureme
 		measurement.left - 1,
 		measurement.top - 1,
 		measurement.width + 2,
-		measurement.height + 2,
+		measurement.height + 2
 	);
 
 	// inset
@@ -203,7 +198,7 @@ function drawBorder(ctx: CanvasRenderingContext2D, measurement: TracingMeasureme
 		measurement.left + borderWidth,
 		measurement.top + borderWidth,
 		measurement.width - borderWidth,
-		measurement.height - borderWidth,
+		measurement.height - borderWidth
 	);
 	ctx.strokeStyle = borderColor;
 
@@ -215,7 +210,7 @@ function drawBorder(ctx: CanvasRenderingContext2D, measurement: TracingMeasureme
 		measurement.left + Math.floor(borderWidth / 2),
 		measurement.top + Math.floor(borderWidth / 2),
 		measurement.width - borderWidth,
-		measurement.height - borderWidth,
+		measurement.height - borderWidth
 	);
 
 	ctx.setLineDash([0]);
@@ -226,6 +221,6 @@ export function createMeasurement(rect: ClientRect) {
 		left: rect.left,
 		top: rect.top,
 		width: rect.width,
-		height: rect.height,
+		height: rect.height
 	};
 }

@@ -1,22 +1,39 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	Input,
+	OnInit,
+	Output
+} from '@angular/core';
 import { Todo } from '../todo/todo.model';
 
 @Component({
 	selector: 'app-todo-item',
 	template: `
-        <div class="view">
-            <input class="toggle" type="checkbox" (change)="toggle.emit(todo)" [checked]="todo.completed">
-            <label *ngIf="currentTodo?.id != todo.id" (dblclick)="edit.emit(todo)">{{todo.title}}</label>
-            <button (click)="delete.emit(todo)" class="destroy"></button>
-        </div>
-        <input *ngIf="currentTodo == todo" [(ngModel)]="currentTodo.title"
-               (keyup.enter)="update.emit(currentTodo)"
-               (keyup.esc)="cancelEdit.emit()"
-               class="edit">
-		{{todo}}
+		<div class="view">
+			<input
+				class="toggle"
+				type="checkbox"
+				(change)="toggle.emit(todo)"
+				[checked]="todo.completed"
+			/>
+			<label *ngIf="currentTodo?.id != todo.id" (dblclick)="edit.emit(todo)">{{
+				todo.title
+			}}</label>
+			<button (click)="delete.emit(todo)" class="destroy"></button>
+		</div>
+		<input
+			*ngIf="currentTodo == todo"
+			[(ngModel)]="currentTodo.title"
+			(keyup.enter)="update.emit(currentTodo)"
+			(keyup.esc)="cancelEdit.emit()"
+			class="edit"
+		/>
+		{{ todo }}
 	`,
 	styleUrls: ['./todo-item.component.css'],
-	// changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodoItemComponent implements OnInit {
 	@Input() todo: Todo;
@@ -27,9 +44,7 @@ export class TodoItemComponent implements OnInit {
 	@Output() update = new EventEmitter<Todo>();
 	@Output() cancelEdit = new EventEmitter<Todo>();
 
-	constructor() {
-	}
+	constructor() {}
 
-	ngOnInit() {
-	}
+	ngOnInit() {}
 }

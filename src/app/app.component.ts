@@ -6,7 +6,6 @@ import { start } from './angular-diagnostic';
 	templateUrl: './app.component.html'
 })
 export class AppComponent {
-
 	constructor() {
 		start();
 	}

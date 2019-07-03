@@ -1,11 +1,16 @@
-import { ChangeDetectionStrategy, Component, DoCheck, OnDestroy, OnInit } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	DoCheck,
+	OnDestroy,
+	OnInit
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { Todo, TodoUtils } from './todo.model';
 import { Filter, FilterUtil } from './filter.model';
 import { TodoService } from '../../todo.service';
-
 
 @Component({
 	selector: 'app-todo',
@@ -14,7 +19,6 @@ import { TodoService } from '../../todo.service';
 	providers: [TodoService]
 })
 export class TodoComponent implements OnInit, DoCheck, OnDestroy {
-
 	private routeSubscription: Subscription;
 
 	newTodo = '';
@@ -25,9 +29,10 @@ export class TodoComponent implements OnInit, DoCheck, OnDestroy {
 	todos: Todo[];
 	filteredTodos: Todo[];
 
-
-	constructor(private todoService: TodoService, private route: ActivatedRoute) {
-	}
+	constructor(
+		private todoService: TodoService,
+		private route: ActivatedRoute
+	) {}
 
 	// ~ lifecycle
 
@@ -39,7 +44,9 @@ export class TodoComponent implements OnInit, DoCheck, OnDestroy {
 
 	ngDoCheck() {
 		this.todos = this.todoService.findAll();
-		this.filteredTodos = this.todos.filter((t) => FilterUtil.accepts(t, this.filter));
+		this.filteredTodos = this.todos.filter(t =>
+			FilterUtil.accepts(t, this.filter)
+		);
 		// this.todos.forEach(t => t.completed ? this.completed++ : this.remaining++);
 	}
 

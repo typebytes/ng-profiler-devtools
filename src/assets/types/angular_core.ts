@@ -1,4 +1,3 @@
-
 export interface RootContext {
 	/**
 	 * A function used for scheduling change detection in the future. Usually
@@ -33,7 +32,6 @@ export const enum RootContextFlags {
 }
 
 export const MONKEY_PATCH_KEY_NAME = '__ngContext__';
-
 
 // Below are constants for LView indices to help us look up LView members
 // without having to remember the specific indices.
@@ -74,12 +72,12 @@ export const VIEW_REFS = 8;
 export const TYPE = 1;
 
 export interface TView {
-	template: Function|null;
+	template: Function | null;
 
 	/** Whether or not this template has been processed. */
 	firstTemplatePass: boolean;
 
-	components: number[]|null;
+	components: number[] | null;
 }
 
 /**
@@ -90,10 +88,7 @@ export interface TView {
 // export interface ComponentTemplate {
 // }
 
-export interface LContainer extends Array<any> {
-
-}
-
+export interface LContainer extends Array<any> {}
 
 export interface LView extends Array<any> {
 	/**
@@ -104,15 +99,14 @@ export interface LView extends Array<any> {
 	 * If the component uses host bindings for styling that the `RElement` will be wrapped with
 	 * `StylingContext`.
 	 */
-		[HOST]: any; // RElement|StylingContext|null;
+	[HOST]: any; // RElement|StylingContext|null;
 
 	/**
 	 * The static data for this view. We need a reference to this so we can easily walk up the
 	 * node tree in DI and get the TView.data array associated with a node (where the
 	 * directive defs are stored).
 	 */
-	readonly[TVIEW]: TView;
-
+	readonly [TVIEW]: TView;
 
 	[PARENT]: LView | LContainer | null;
 
@@ -125,8 +119,7 @@ export interface LView extends Array<any> {
 	 * views in the same container. We need a way to link component views and views
 	 * across containers as well.
 	 */
-		[NEXT]: LView | LContainer | null;
-
+	[NEXT]: LView | LContainer | null;
 
 	/**
 	 * - For dynamic views, this is the context with which to render the template (e.g.
@@ -135,7 +128,7 @@ export interface LView extends Array<any> {
 	 * - For non-root components, the context is the component instance,
 	 * - For inline views, the context is null.
 	 */
-		[CONTEXT]: {} | RootContext | null;
+	[CONTEXT]: {} | RootContext | null;
 
 	/**
 	 * Reference to the first LView or LContainer beneath this LView in
@@ -144,7 +137,7 @@ export interface LView extends Array<any> {
 	 * Necessary to store this so views can traverse through their nested views
 	 * to remove listeners and call onDestroy callbacks.
 	 */
-		[CHILD_HEAD]: LView | LContainer | null;
+	[CHILD_HEAD]: LView | LContainer | null;
 
 	/**
 	 * The last LView or LContainer beneath this LView in the hierarchy.
@@ -152,8 +145,7 @@ export interface LView extends Array<any> {
 	 * The tail allows us to quickly add a new state to the end of the view list
 	 * without having to propagate starting from the first child.
 	 */
-		[CHILD_TAIL]: LView | LContainer | null;
-
+	[CHILD_TAIL]: LView | LContainer | null;
 
 	/**
 	 * View where this view's template was declared.
@@ -179,9 +171,8 @@ export interface LView extends Array<any> {
 	 * template function during change detection, we need the declaration view to get inherited
 	 * context.
 	 */
-		[DECLARATION_VIEW]: LView | null;
+	[DECLARATION_VIEW]: LView | null;
 }
-
 
 export interface LContext {
 	/**
@@ -197,18 +188,18 @@ export interface LContext {
 	/**
 	 * The instance of the Component node.
 	 */
-	component: {}|null|undefined;
+	component: {} | null | undefined;
 
 	/**
 	 * The list of active directives that exist on this element.
 	 */
-	directives: any[]|null|undefined;
+	directives: any[] | null | undefined;
 
 	/**
 	 * The map of local references (local reference name => element or directive instance) that exist
 	 * on this element.
 	 */
-	localRefs: {[key: string]: any}|null|undefined;
+	localRefs: { [key: string]: any } | null | undefined;
 }
 
 /** Flags associated with an LView (saved in LView[FLAGS]) */
@@ -273,6 +264,5 @@ export const enum LViewFlags {
 	 */
 	IndexWithinInitPhaseIncrementer = 0b010000000000,
 	IndexWithinInitPhaseShift = 10,
-	IndexWithinInitPhaseReset = 0b001111111111,
+	IndexWithinInitPhaseReset = 0b001111111111
 }
-
