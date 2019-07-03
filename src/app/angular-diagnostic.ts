@@ -13,8 +13,7 @@ import {
 	MONKEY_PATCH_KEY_NAME,
 	RootContext,
 	TView,
-	TVIEW,
-	TYPE
+	TVIEW
 } from './lib/types/angular_core';
 import { ACTIVE_INDEX, CHILD_HEAD, HEADER_OFFSET, NEXT, VIEW_REFS } from '../assets/types/angular_core';
 import { createMeasurement, Tracer } from './lib/tracing';
@@ -150,35 +149,30 @@ function getNextLView(viewLoop?: TreeViewItem, rootLView?: LView) {
 		return;
 	}
 	if (!viewLoop.checkedDynamicComponents) {
-		// first check dynamic embedded views
-		for (let current: LContainer = viewLoop.nextCurrent !== undefined ? viewLoop.nextCurrent : viewLoop.lView[CHILD_HEAD]; current !== null; current = current[NEXT]) {
-			// Note: current can be an LView or an LContainer instance, but here we are only interested
-			// in LContainer. We can tell it's an LContainer because its length is less than the LView
-			// header.
-			if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
-				/** @type {?} */
-				const container = (/** @type {?} */ (current));
-				for (let i = viewLoop.currentDynamicIndex ? viewLoop.currentDynamicIndex : 0; i < container[VIEW_REFS].length; i++) {
-					/** @type {?} */
-					const dynamicViewData = container[VIEW_REFS][i];
-					// if we've looped every element in this list, it doesn't make sense to loop it again, with the next iteration,
-					// we want to start from the next 'current'
-					if (i === container[VIEW_REFS].length - 1) {
-						viewLoop.nextCurrent = current[NEXT];
-					} else {
-						// In the other case, we need to keep a reference the index that we are currently at
-						viewLoop.currentDynamicIndex = i + 1;
-					}
-					getNextLView({
-						lView: dynamicViewData,
-						currentIndex: 0,
-						children: [],
-						parent: viewLoop,
-						isRoot: false
-					});
-					return;
-				}
+		const work = (dynamicLView: LView, lastViewRef: boolean, currentViewRefIndex: number, nextLContainer: LContainer) => {
+			if (lastViewRef) {
+				viewLoop.nextCurrent = nextLContainer;
+			} else {
+				viewLoop.currentDynamicIndex = currentViewRefIndex + 1;
 			}
+			getNextLView({
+				lView: dynamicLView,
+				currentIndex: 0,
+				children: [],
+				parent: viewLoop,
+				isRoot: false
+			});
+		};
+		// first check dynamic embedded views
+		const executedWork = loopDynamicEmbeddedViews({
+			lView: viewLoop.lView,
+			work,
+			nextCurrentLContainer: viewLoop.nextCurrent,
+			nextViewRefIndex: viewLoop.currentDynamicIndex,
+			exitLoopPrematurely: true
+		});
+		if (executedWork) {
+			return;
 		}
 		viewLoop.checkedDynamicComponents = true;
 	}
@@ -238,33 +232,38 @@ function viewAttachedToChangeDetector(view) {
 	return (view[FLAGS] & 128 /* Attached */) === 128 /* Attached */;
 }
 
-function refreshDynamicEmbeddedViews(lView) {
-	for (let current: LContainer = lView[CHILD_HEAD]; current !== null; current = current[NEXT]) {
-		// Note: current can be an LView or an LContainer instance, but here we are only interested
-		// in LContainer. We can tell it's an LContainer because its length is less than the LView
-		// header.
+function loopDynamicEmbeddedViews({lView, work, nextCurrentLContainer, nextViewRefIndex, exitLoopPrematurely = false}: {
+	lView: LView,
+	work: (nextLView: LView, lastViewRef: boolean, currentViewRefIndex: number, nextLContainer: LContainer) => void,
+	nextCurrentLContainer?: LContainer,
+	nextViewRefIndex?: number,
+	exitLoopPrematurely?: boolean,
+}) {
+	for (let current: LContainer = nextCurrentLContainer !== undefined ? nextCurrentLContainer : lView[CHILD_HEAD]; current !== null; current = current[NEXT]) {
 		if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
-			/** @type {?} */
-			const container = (/** @type {?} */ (current));
-			for (let i = 0; i < container[VIEW_REFS].length; i++) {
+			for (let i = nextViewRefIndex ? nextViewRefIndex : 0; i < current[VIEW_REFS].length; i++) {
 				/** @type {?} */
-				const dynamicViewData = container[VIEW_REFS][i];
-				// Should be the ngFor context
-				// console.debug(dynamicViewData);
-				monkeyPatchDescendantViews(dynamicViewData);
-				// renderEmbeddedTemplate(dynamicViewData, dynamicViewData[TVIEW], (/** @type {?} */ (dynamicViewData[CONTEXT])));
+				const dynamicViewData = current[VIEW_REFS][i];
+				work(dynamicViewData, i === current[VIEW_REFS].length - 1, i, current[NEXT]);
+				if (exitLoopPrematurely) {
+					return true;
+				}
 			}
 		}
 	}
+	return false;
+}
+
+function refreshDynamicEmbeddedViews(lView) {
+	const work = (dynamicLView: LView) => monkeyPatchDescendantViews(dynamicLView);
+	loopDynamicEmbeddedViews({lView, work});
 }
 
 
-export function monkeyPatchDescendantViews(lView: LView, onlyDynamic = false) {
+export function monkeyPatchDescendantViews(lView: LView, dynamic = false) {
 	const tView: TView = lView[TVIEW];
 
-	const creationMode = isCreationMode(lView);
-
-	if (!onlyDynamic) {
+	if (!dynamic) {
 		console.log(tView.components);
 		monkeyPatchChildComponents(tView.components, lView);
 	}

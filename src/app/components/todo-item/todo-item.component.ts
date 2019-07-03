@@ -16,7 +16,7 @@ import { Todo } from '../todo/todo.model';
 		{{todo}}
 	`,
 	styleUrls: ['./todo-item.component.css'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	// changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodoItemComponent implements OnInit {
 	@Input() todo: Todo;
