@@ -1,7 +1,11 @@
-import { LContainer, LView, TVIEW } from './types/angular_core';
+import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
 import { shouldLViewBeChecked } from './util';
 import { loopDynamicEmbeddedViews } from './tree-traversal';
-import { TreeViewBuilder, TreeViewItem } from './tree-view-builder';
+import {
+	createInitialTreeViewState,
+	TreeViewBuilder,
+	TreeViewItem
+} from './tree-view-builder';
 
 /**
  * This class encapsulates the same logic used by the Angular Ivy renderer to determine what the next view is to be checked.
@@ -21,7 +25,7 @@ export class LViewStateManager {
 	predictedNextLView: LView;
 
 	// TreeViewBuilder that will be filled with all predictedLViews
-	treeViewBuilder: TreeViewBuilder;
+	private treeViewBuilder: TreeViewBuilder;
 
 	/**
 	 * Function will change the pointer to the predictedNextLView parameter to the one Angular called the template function for.
@@ -35,7 +39,7 @@ export class LViewStateManager {
 	getNextLView(treeViewItem?: TreeViewItem, rootLView?: LView): TreeViewItem {
 		// If there is no current predictedLView it MUST be the current iteration
 		if (!this.predictedNextLView) {
-			const rootTreeViewItem = this.initialiseState(rootLView);
+			const rootTreeViewItem = createInitialTreeViewState(rootLView, true);
 			this.treeViewBuilder = new TreeViewBuilder();
 			this.treeViewBuilder.addTreeViewItem(rootTreeViewItem);
 			this.predictedNextLView = rootLView;
@@ -63,13 +67,10 @@ export class LViewStateManager {
 					// If not, we need to update the index of the current viewRef so we don't revisit that one again
 					treeViewItem.currentViewRefIndex = currentViewRefIndex + 1;
 				}
-				this.getNextLView({
-					lView: dynamicLView,
-					currentIndex: 0,
-					children: [],
-					parent: treeViewItem,
-					isRoot: false
-				});
+				// We go deeper into the dynamicEmbeddedView found to find components
+				this.getNextLView(
+					createInitialTreeViewState(dynamicLView, false, treeViewItem)
+				);
 			};
 
 			// Call the tree traversal for dynamicEmbeddedViews, exit the loop whenever we hit something. We only want to visit the
@@ -99,38 +100,54 @@ export class LViewStateManager {
 			}
 			return;
 		}
+
+		// Pick the one based on the index
 		const potentialLView =
 			treeViewItem.lView[components[treeViewItem.currentIndex]];
+
+		// Check if it is not the root and if the component will be checked during this CD cycle, find the next
 		if (!treeViewItem.isRoot && shouldLViewBeChecked(potentialLView)) {
 			treeViewItem.currentIndex++;
 			this.getNextLView(treeViewItem);
 			return;
 		}
+
+		// Found the component that will be checked next
 		this.predictedNextLView =
 			treeViewItem.lView[components[treeViewItem.currentIndex]] ||
 			treeViewItem.lView;
+
+		// Up the index so we don't go over it again
 		treeViewItem.currentIndex++;
-		const childTreeViewItem = {
-			lView: this.predictedNextLView,
-			currentIndex: 0,
-			children: [],
-			parent: treeViewItem,
-			isRoot: false
-		};
-		this.treeViewBuilder.addTreeViewItem(childTreeViewItem, treeViewItem);
+
+		// Create a new treeViewItem entry and add it as a child to the current one
+		const childTreeViewItem = createInitialTreeViewState(
+			this.predictedNextLView,
+			false,
+			treeViewItem
+		);
+
+		this.treeViewBuilder.addTreeViewItem(
+			childTreeViewItem,
+			this.getRealParent(treeViewItem)
+		);
 	}
 
 	resetState() {
 		this.predictedNextLView = null;
 	}
 
-	private initialiseState(lView) {
-		console.log('initialised');
-		return {
-			lView,
-			currentIndex: 0,
-			children: [],
-			isRoot: true
-		};
+	getTree() {
+		return this.treeViewBuilder.rootTreeViewItem;
+	}
+
+	// Because of dynamicEmbeddedViews and because we need to be able to walk the tree, some elements are added as parents which aren't
+	// components, we need to filter those out
+	private getRealParent(treeViewItem: TreeViewItem) {
+		if (treeViewItem.lView[HOST]) {
+			return treeViewItem;
+		} else {
+			return this.getRealParent(treeViewItem.parent);
+		}
 	}
 }

@@ -1,5 +1,5 @@
 import { Component, NgZone } from '@angular/core';
-import { start } from './angular-diagnostic';
+import { start } from './lib';
 
 @Component({
 	selector: 'app-root',

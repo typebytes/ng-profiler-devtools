@@ -1,4 +1,4 @@
-import { LContainer, LView, TVIEW } from './types/angular_core';
+import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
 import {
 	ACTIVE_INDEX,
 	CHILD_HEAD,
@@ -7,6 +7,10 @@ import {
 	VIEW_REFS
 } from '../../assets/types/angular_core';
 import { getComponentViewByIndex } from './util';
+import {
+	createInitialTreeViewState,
+	TreeViewBuilder
+} from './tree-view-builder';
 
 export function loopDynamicEmbeddedViews({
 	lView,
@@ -63,7 +67,7 @@ export function loopChildComponents({
 }: {
 	lView: LView;
 	work: (lView: LView) => void;
-	exitLoopPrematurely: boolean;
+	exitLoopPrematurely?: boolean;
 }) {
 	const tView = lView[TVIEW];
 	if (tView.components != null) {
@@ -76,4 +80,56 @@ export function loopChildComponents({
 		}
 	}
 	return false;
+}
+
+export function traverseTree(
+	lView,
+	root,
+	treeViewBuilder = new TreeViewBuilder()
+) {
+	// Only when the lView has a host element do we want to add it, otherwise it's a dynamicEmbeddedView
+	if (lView[HOST]) {
+		debugger;
+		treeViewBuilder.addTreeViewItem(
+			createInitialTreeViewState(lView, root, null),
+			treeViewBuilder.currentTreeViewItem
+		);
+	}
+
+	const treeViewItem = treeViewBuilder.currentTreeViewItem;
+
+	const whenDynamicEmbeddedViewFound = (
+		dynamicLView: LView,
+		lastViewRef: boolean,
+		currentViewRefIndex: number,
+		nextLContainer: LContainer
+	) => {
+		// if it was the last viewRef for that LContainer, we need to update the pointer so the next loop doesn't revisit it
+		if (lastViewRef) {
+			treeViewBuilder.currentTreeViewItem.nextCurrent = nextLContainer;
+		} else {
+			// If not, we need to update the index of the current viewRef so we don't revisit that one again
+			treeViewBuilder.currentTreeViewItem.currentViewRefIndex =
+				currentViewRefIndex + 1;
+		}
+
+		traverseTree(dynamicLView, false, treeViewBuilder);
+	};
+
+	loopDynamicEmbeddedViews({
+		lView,
+		work: whenDynamicEmbeddedViewFound,
+		nextCurrentLContainer: treeViewItem.nextCurrent,
+		nextViewRefIndex: treeViewItem.currentViewRefIndex
+	});
+
+	const whenChildComponentFound = (childLView: LView) => {
+		traverseTree(childLView, false, treeViewBuilder);
+	};
+
+	loopChildComponents({ lView, work: whenChildComponentFound });
+
+	if (root) {
+		return treeViewBuilder.rootTreeViewItem;
+	}
 }

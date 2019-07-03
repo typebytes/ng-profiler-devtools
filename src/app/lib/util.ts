@@ -29,20 +29,10 @@ export function isLView(
 	return Array.isArray(value) && typeof value[TYPE] === 'object';
 }
 
-/**
- * Will read the __ngContext__ property from a target
- *
- * @param target
- */
 export function readPatchedData(target: any): LView | LContext | null {
 	return target[MONKEY_PATCH_KEY_NAME];
 }
 
-/**
- * Gets the LView from a target
- *
- * @param target
- */
 export function readPatchedLView(target: any): LView | null {
 	const value = readPatchedData(target);
 	if (value) {
@@ -51,17 +41,12 @@ export function readPatchedLView(target: any): LView | null {
 	return null;
 }
 
-/**
- * Checks if a view is in creation mode
- *
- * @param view
- */
 export function isCreationMode(view: LView): boolean {
 	return (view[FLAGS] & LViewFlags.CreationMode) === LViewFlags.CreationMode;
 }
 
 function viewAttachedToChangeDetector(view): boolean {
-	return (view[FLAGS] & 128) /* Attached */ === 128 /* Attached */;
+	return (view[FLAGS] & LViewFlags.Attached) === LViewFlags.Attached;
 }
 
 export function shouldLViewBeChecked(lView: LView): boolean {
@@ -69,4 +54,22 @@ export function shouldLViewBeChecked(lView: LView): boolean {
 		(viewAttachedToChangeDetector(lView) || isCreationMode(lView)) &&
 		(lView[FLAGS] & (LViewFlags.CheckAlways | LViewFlags.Dirty)) === 0
 	);
+}
+
+export function findAngularRootNode(node): LView {
+	if (!node || !node.childNodes) {
+		return;
+	}
+	const childNodes = node.childNodes;
+	for (let i = 0; i < childNodes.length; i++) {
+		const childNode = childNodes[i];
+		if (childNode[MONKEY_PATCH_KEY_NAME]) {
+			return childNode[MONKEY_PATCH_KEY_NAME].debug._raw_lView;
+		} else {
+			const potentialRootNode = findAngularRootNode(childNode);
+			if (potentialRootNode) {
+				return potentialRootNode;
+			}
+		}
+	}
 }

@@ -24,6 +24,8 @@ export class TreeViewBuilder {
 	rootTreeViewItem: TreeViewItem;
 	currentTreeViewItem: TreeViewItem;
 
+	constructor() {}
+
 	addTreeViewItem(
 		childTreeViewItem: TreeViewItem,
 		parentTreeViewItem?: TreeViewItem
@@ -36,4 +38,18 @@ export class TreeViewBuilder {
 			this.currentTreeViewItem = childTreeViewItem;
 		}
 	}
+}
+
+export function createInitialTreeViewState(
+	lView: LView,
+	isRoot: boolean,
+	parent?: TreeViewItem
+): TreeViewItem {
+	return {
+		lView,
+		currentIndex: 0,
+		children: [],
+		isRoot,
+		parent
+	};
 }
