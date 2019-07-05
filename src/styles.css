@@ -9,3 +9,35 @@
 		opacity: 0;
 	}
 }
+
+body {
+	font: 300 14px 'Helvetica Neue', Helvetica;
+}
+
+.node rect,
+.node circle,
+.node ellipse {
+	stroke: #333;
+	fill: #fff;
+	stroke-width: 1px;
+}
+
+.edgePath path {
+	stroke: #333;
+	fill: #333;
+	stroke-width: 1.5px;
+}
+
+.graphs {
+	display: flex;
+	flex-direction: column;
+}
+
+.full-width {
+	width: 100vw;
+	position: relative;
+	left: 50%;
+	right: 50%;
+	margin-left: -50vw;
+	margin-right: -50vw;
+}

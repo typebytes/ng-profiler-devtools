@@ -1,6 +1,6 @@
 import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
 import { shouldLViewBeChecked } from './util';
-import { loopDynamicEmbeddedViews } from './tree-traversal';
+import { getRealParent, loopDynamicEmbeddedViews } from './tree-traversal';
 import {
 	createInitialTreeViewState,
 	TreeViewBuilder,
@@ -129,7 +129,7 @@ export class LViewStateManager {
 
 		this.treeViewBuilder.addTreeViewItem(
 			childTreeViewItem,
-			this.getRealParent(treeViewItem)
+			getRealParent(treeViewItem)
 		);
 	}
 
@@ -139,15 +139,5 @@ export class LViewStateManager {
 
 	getTree() {
 		return this.treeViewBuilder.rootTreeViewItem;
-	}
-
-	// Because of dynamicEmbeddedViews and because we need to be able to walk the tree, some elements are added as parents which aren't
-	// components, we need to filter those out
-	private getRealParent(treeViewItem: TreeViewItem) {
-		if (treeViewItem.lView[HOST]) {
-			return treeViewItem;
-		} else {
-			return this.getRealParent(treeViewItem.parent);
-		}
 	}
 }

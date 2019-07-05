@@ -7,10 +7,7 @@ import {
 	VIEW_REFS
 } from '../../assets/types/angular_core';
 import { getComponentViewByIndex } from './util';
-import {
-	createInitialTreeViewState,
-	TreeViewBuilder
-} from './tree-view-builder';
+import { createInitialTreeViewState, TreeViewItem } from './tree-view-builder';
 
 export function loopDynamicEmbeddedViews({
 	lView,
@@ -83,53 +80,56 @@ export function loopChildComponents({
 }
 
 export function traverseTree(
-	lView,
-	root,
-	treeViewBuilder = new TreeViewBuilder()
+	lView: LView,
+	isRoot: boolean,
+	parentTreeViewItem?: TreeViewItem
 ) {
+	const treeViewItem = createInitialTreeViewState(
+		lView,
+		isRoot,
+		parentTreeViewItem
+	);
+
 	// Only when the lView has a host element do we want to add it, otherwise it's a dynamicEmbeddedView
-	if (lView[HOST]) {
-		debugger;
-		treeViewBuilder.addTreeViewItem(
-			createInitialTreeViewState(lView, root, null),
-			treeViewBuilder.currentTreeViewItem
-		);
+	if (lView[HOST] && !isRoot) {
+		// If there is a parentTreeViewItem, it means that the currentTreeViewItem was a dynamic one, so we add it to the parent
+		parentTreeViewItem.children.push(treeViewItem);
 	}
 
-	const treeViewItem = treeViewBuilder.currentTreeViewItem;
-
-	const whenDynamicEmbeddedViewFound = (
-		dynamicLView: LView,
-		lastViewRef: boolean,
-		currentViewRefIndex: number,
-		nextLContainer: LContainer
-	) => {
-		// if it was the last viewRef for that LContainer, we need to update the pointer so the next loop doesn't revisit it
-		if (lastViewRef) {
-			treeViewBuilder.currentTreeViewItem.nextCurrent = nextLContainer;
-		} else {
-			// If not, we need to update the index of the current viewRef so we don't revisit that one again
-			treeViewBuilder.currentTreeViewItem.currentViewRefIndex =
-				currentViewRefIndex + 1;
-		}
-
-		traverseTree(dynamicLView, false, treeViewBuilder);
+	const whenDynamicEmbeddedViewFound = (dynamicLView: LView) => {
+		traverseTree(
+			dynamicLView,
+			false,
+			treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
+		);
 	};
 
 	loopDynamicEmbeddedViews({
 		lView,
-		work: whenDynamicEmbeddedViewFound,
-		nextCurrentLContainer: treeViewItem.nextCurrent,
-		nextViewRefIndex: treeViewItem.currentViewRefIndex
+		work: whenDynamicEmbeddedViewFound
 	});
 
 	const whenChildComponentFound = (childLView: LView) => {
-		traverseTree(childLView, false, treeViewBuilder);
+		traverseTree(
+			childLView,
+			false,
+			treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
+		);
 	};
 
 	loopChildComponents({ lView, work: whenChildComponentFound });
 
-	if (root) {
-		return treeViewBuilder.rootTreeViewItem;
+	if (isRoot) {
+		return treeViewItem;
+	}
+}
+
+// Because of dynamicEmbeddedViews and because we need to be able to walk the tree, some elements are added as parents which aren't
+// components, we need to filter those out
+export function getRealParent(treeViewItem: TreeViewItem) {
+	if (treeViewItem.lView[HOST]) {
+		return treeViewItem;
+	} else {
+		return getRealParent(treeViewItem.parent);
 	}
 }

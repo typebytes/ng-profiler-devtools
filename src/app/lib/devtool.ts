@@ -8,6 +8,7 @@ import {
 	traverseTree
 } from './tree-traversal';
 import { scheduleOutsideOfZone } from './zone-handler';
+import { renderTree } from './visualisation/graph';
 
 const tracer = new Tracer();
 const lViewStateManager = new LViewStateManager();
@@ -29,8 +30,8 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
 			scheduleOutsideOfZone(() => {
-				console.log('updated tree', lViewStateManager.getTree());
-				console.log('Tree', traverseTree(rootLView, true));
+				renderTree('updatedTree', lViewStateManager.getTree());
+				renderTree('tree', traverseTree(rootLView, true));
 			});
 		}
 		// Set the pointer to the next lView
