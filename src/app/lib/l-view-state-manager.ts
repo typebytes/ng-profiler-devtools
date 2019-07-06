@@ -1,11 +1,13 @@
 import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
-import { shouldLViewBeChecked } from './util';
+import { DEVTOOLS_IDENTIFIER, shouldLViewBeChecked } from './util';
 import { getRealParent, loopDynamicEmbeddedViews } from './tree-traversal';
 import {
 	createInitialTreeViewState,
 	TreeViewBuilder,
 	TreeViewItem
 } from './tree-view-builder';
+import * as uuid from 'uuid';
+import { root } from 'rxjs/internal-compatibility';
 
 /**
  * This class encapsulates the same logic used by the Angular Ivy renderer to determine what the next view is to be checked.

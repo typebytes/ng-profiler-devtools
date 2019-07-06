@@ -1,6 +1,7 @@
 import { TreeViewItem } from '../tree-view-builder';
 import * as dagreD3 from 'dagre-d3';
-import * as d3 from 'd3';
+import { event as d3Event, select as d3Select } from 'd3-selection';
+import { zoom as d3Zoom, zoomIdentity as d3ZoomIdentity } from 'd3-zoom';
 import { HOST } from '../types/angular_core';
 
 export function renderTree(id: string, treeViewItem: TreeViewItem) {
@@ -14,29 +15,29 @@ export function renderTree(id: string, treeViewItem: TreeViewItem) {
 
 	walkTreeAndAddNodes(g, treeViewItem);
 
-	// Set up an SVG group so that we can translate the final graph.
-	const svg = d3.select(`svg#${id}`),
-		svgGroup = svg.append('g');
+	const svg = d3Select(`svg#${id}`),
+		inner = svg.select('g');
 
-	// Set up zoom support
-	const zoom = d3.zoom().on('zoom', function() {
-		svgGroup.attr('transform', d3.event.transform);
+	const zoom = d3Zoom().on('zoom', function() {
+		inner.attr('transform', d3Event.transform);
 	});
 	svg.call(zoom);
 
-	// // Create the renderer
 	const render = new dagreD3.render();
+	render(inner as any, g);
 
-	// Run the renderer. This is what draws the final graph.
-	render(d3.select(`svg#${id}`) as any, g);
-
-	// Center the graph
-	// 	const initialScale = 0.75;
-	// 	svg.call(zoom.transform, d3.zoomIdentity.translate((+svg.attr('width') - g.graph().width * initialScale) / 2, 20).scale(initialScale));
-	// 	svg.attr('height', g.graph().height * initialScale + 40);
-	const xCenterOffset = (+svg.attr('width') - g.graph().width) / 2;
-	svgGroup.attr('transform', 'translate(' + xCenterOffset + ', 20)');
-	svg.attr('height', g.graph().height + 40);
+	const initialScale = 0.9;
+	console.log(g.graph().width);
+	console.log(+svg.attr('width'));
+	console.log((+svg.attr('width') - g.graph().width * 0.6) / 2);
+	const transform = d3ZoomIdentity
+		.translate((+svg.attr('width') - g.graph().width * 0.6) / 2, 20)
+		.scale(initialScale);
+	(inner as any)
+		.transition()
+		.duration(0)
+		.call(zoom.transform, transform);
+	svg.attr('height', g.graph().height * initialScale + 200);
 }
 
 // FIXME graph should be unaware of host and stuff

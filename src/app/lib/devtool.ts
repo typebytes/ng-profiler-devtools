@@ -1,7 +1,7 @@
 import { HOST, LView, RootContext, TView, TVIEW } from './types/angular_core';
 import { createMeasurement, Tracer } from './tracing';
 import { LViewStateManager } from './l-view-state-manager';
-import { readPatchedLView } from './util';
+import { DEVTOOLS_IDENTIFIER, readPatchedLView } from './util';
 import {
 	loopChildComponents,
 	loopDynamicEmbeddedViews,
@@ -9,6 +9,8 @@ import {
 } from './tree-traversal';
 import { scheduleOutsideOfZone } from './zone-handler';
 import { renderTree } from './visualisation/graph';
+import * as uuid from 'uuid';
+import { serialiseTreeViewItem } from './tree-view-builder';
 
 const tracer = new Tracer();
 const lViewStateManager = new LViewStateManager();
@@ -30,7 +32,11 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
 			scheduleOutsideOfZone(() => {
+				const updatedTree = lViewStateManager.getTree();
+				console.log(serialiseTreeViewItem(updatedTree));
 				renderTree('updatedTree', lViewStateManager.getTree());
+				const tree = traverseTree(rootLView, true);
+				console.log(serialiseTreeViewItem(tree));
 				renderTree('tree', traverseTree(rootLView, true));
 			});
 		}

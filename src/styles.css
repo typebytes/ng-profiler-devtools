@@ -41,3 +41,7 @@ body {
 	margin-left: -50vw;
 	margin-right: -50vw;
 }
+
+svg {
+	overflow: hidden;
+}

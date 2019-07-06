@@ -1,8 +1,9 @@
-import { LView } from './types/angular_core';
+import { FLAGS, LView, LViewFlags, TVIEW } from './types/angular_core';
+import { DEVTOOLS_IDENTIFIER } from './util';
 
 export interface SerializedTreeViewItem {
 	// TODO: should become a serializable identifier later
-	lView: LView;
+	uuid: string;
 	children: SerializedTreeViewItem[];
 	checked: boolean;
 	onPush: boolean;
@@ -38,6 +39,21 @@ export class TreeViewBuilder {
 			this.currentTreeViewItem = childTreeViewItem;
 		}
 	}
+}
+
+export function serialiseTreeViewItem(
+	treeViewItem: TreeViewItem
+): SerializedTreeViewItem {
+	console.log(treeViewItem.lView[FLAGS] & 0b00000010000);
+	return {
+		uuid: treeViewItem.lView[0][DEVTOOLS_IDENTIFIER],
+		children: treeViewItem.children.map(loopTreeViewItem =>
+			serialiseTreeViewItem(loopTreeViewItem)
+		),
+		tagName: treeViewItem.lView[0].tagName,
+		onPush: (treeViewItem.lView[FLAGS] & LViewFlags.CheckAlways) === 0,
+		checked: false
+	};
 }
 
 export function createInitialTreeViewState(
