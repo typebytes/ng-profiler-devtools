@@ -26,6 +26,32 @@ export const DECLARATION_VIEW = 17;
  * retrieved from the `LView` and that array has `true` at `TYPE` location, we know it is
  * `LContainer`.
  */
+/**
+ * Below are constants for LContainer indices to help us look up LContainer members
+ * without having to remember the specific indices.
+ * Uglify will inline these when minifying so there shouldn't be a cost.
+ */
+export const ACTIVE_INDEX = 2;
+// PARENT, NEXT, QUERIES and T_HOST are indices 3, 4, 5 and 6.
+// As we already have these constants in LView, we don't need to re-create them.
+export const NATIVE = 7;
+export const VIEW_REFS = 8;
+
+/**
+ * Size of LContainer's header. Represents the index after which all views in the
+ * container will be inserted. We need to keep a record of current views so we know
+ * which views are already in the DOM (and don't need to be re-added) and so we can
+ * remove views from the DOM when they are no longer required.
+ */
+export const CONTAINER_HEADER_OFFSET = 9;
+
+export const HEADER_OFFSET = 20;
+
+/**
+ * Special location which allows easy identification of type. If we have an array which was
+ * retrieved from the `LView` and that array has `true` at `TYPE` location, we know it is
+ * `LContainer`.
+ */
 export const TYPE = 1;
 
 export interface TView {

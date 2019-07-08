@@ -66,7 +66,7 @@ export function findAngularRootNode(node): LView {
 	for (let i = 0; i < childNodes.length; i++) {
 		const childNode = childNodes[i];
 		if (childNode[MONKEY_PATCH_KEY_NAME]) {
-			return childNode[MONKEY_PATCH_KEY_NAME].debug._raw_lView;
+			return childNode[MONKEY_PATCH_KEY_NAME];
 		} else {
 			const potentialRootNode = findAngularRootNode(childNode);
 			if (potentialRootNode) {

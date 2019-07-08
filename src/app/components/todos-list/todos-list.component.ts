@@ -43,8 +43,8 @@ import { Todo, TodoUtils } from '../todo/todo.model';
 			</ul>
 		</section>
 	`,
-	styleUrls: ['./todos-list.component.css']
-	// changeDetection: ChangeDetectionStrategy.OnPush
+	styleUrls: ['./todos-list.component.css'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TodosListComponent implements DoCheck {
 	@Input() todos: Todo[];

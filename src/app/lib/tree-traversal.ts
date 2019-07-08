@@ -5,7 +5,7 @@ import {
 	HEADER_OFFSET,
 	NEXT,
 	VIEW_REFS
-} from '../../assets/types/angular_core';
+} from './types/angular_core';
 import { getComponentViewByIndex } from './util';
 import { createInitialTreeViewState, TreeViewItem } from './tree-view-builder';
 

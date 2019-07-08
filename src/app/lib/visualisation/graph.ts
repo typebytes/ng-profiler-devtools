@@ -19,9 +19,9 @@ export function renderTree(id: string, treeViewItem: TreeViewItem) {
 		inner = svg.select('g');
 
 	const zoom = d3Zoom().on('zoom', function() {
-		inner.attr('transform', d3Event.transform);
+		// inner.attr('transform', d3Event.transform);
 	});
-	svg.call(zoom);
+	// svg.call(zoom);
 
 	const render = new dagreD3.render();
 	render(inner as any, g);
