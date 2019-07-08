@@ -18,7 +18,8 @@ import { root } from 'rxjs/internal-compatibility';
  * and which one is not.
  *
  * The class exposes the predictedNextLView property which is the predicted lView to be checked. By calling the getNextLView function
- * the pointer is set to the next predicted one.
+ * the pointer is set to the next predicted one. This is done by mimicking the tree traversal that Angular does internally. Every time this
+ * traversal is updated, this file will need to be as well!
  *
  * Call the resetState function to reset the initial state between different loops.
  */
