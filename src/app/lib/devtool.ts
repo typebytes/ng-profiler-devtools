@@ -1,16 +1,17 @@
 import { HOST, LView, RootContext, TView, TVIEW } from './types/angular_core';
 import { createMeasurement, Tracer } from './tracing';
 import { LViewStateManager } from './l-view-state-manager';
-import { DEVTOOLS_IDENTIFIER, readPatchedLView } from './util';
+import { readPatchedLView } from './util';
 import {
 	loopChildComponents,
 	loopDynamicEmbeddedViews,
-	traverseTree
+	transformTreeToInstructions,
+	traverseTreeAndCreateTreeStructure
 } from './tree-traversal';
 import { scheduleOutsideOfZone } from './zone-handler';
 import { renderTree } from './visualisation/graph';
 import * as uuid from 'uuid';
-import { serialiseTreeViewItem } from './tree-view-builder';
+import { DEVTOOLS_IDENTIFIER } from './constants';
 
 const tracer = new Tracer();
 const lViewStateManager = new LViewStateManager();
@@ -33,16 +34,21 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 			lViewStateManager.resetState();
 			scheduleOutsideOfZone(() => {
 				const updatedTree = lViewStateManager.getTree();
-				console.log(serialiseTreeViewItem(updatedTree));
-				renderTree('updatedTree', lViewStateManager.getTree());
-				const tree = traverseTree(rootLView, true);
-				console.log(serialiseTreeViewItem(tree));
-				renderTree('tree', traverseTree(rootLView, true));
+				renderTree('updatedTree', updatedTree);
+				renderTree(
+					'tree',
+					traverseTreeAndCreateTreeStructure(rootLView, true),
+					transformTreeToInstructions(updatedTree)
+				);
 			});
 		}
 		// Set the pointer to the next lView
 		lViewStateManager.getNextLView(null, rootLView);
 		const currentLView = lViewStateManager.predictedNextLView;
+		if (!currentLView[HOST][DEVTOOLS_IDENTIFIER]) {
+			console.log('generating id for', currentLView[HOST].tagName);
+			currentLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
+		}
 		origTemplate(...args);
 
 		// After executing the template, we need to check if components were added

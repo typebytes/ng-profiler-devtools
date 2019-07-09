@@ -1,13 +1,18 @@
-import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
 import {
 	ACTIVE_INDEX,
 	CHILD_HEAD,
 	HEADER_OFFSET,
+	HOST,
+	LContainer,
+	LView,
 	NEXT,
+	TVIEW,
 	VIEW_REFS
 } from './types/angular_core';
 import { getComponentViewByIndex } from './util';
 import { createInitialTreeViewState, TreeViewItem } from './tree-view-builder';
+import * as uuid from 'uuid';
+import { DEVTOOLS_IDENTIFIER } from './constants';
 
 export function loopDynamicEmbeddedViews({
 	lView,
@@ -79,49 +84,99 @@ export function loopChildComponents({
 	return false;
 }
 
-export function traverseTree(
-	lView: LView,
-	isRoot: boolean,
-	parentTreeViewItem?: TreeViewItem
+export function traverseTreeAndCreateTreeStructure(
+	rootLView: LView,
+	isRoot: boolean
 ) {
-	const treeViewItem = createInitialTreeViewState(
-		lView,
-		isRoot,
-		parentTreeViewItem
-	);
+	const addElement = (
+		treeViewItem: TreeViewItem,
+		parentTreeViewItem: TreeViewItem
+	) => parentTreeViewItem.children.push(treeViewItem);
+	return traverseTreeToStructure(addElement)(rootLView, isRoot);
+}
 
-	// Only when the lView has a host element do we want to add it, otherwise it's a dynamicEmbeddedView
-	if (lView[HOST] && !isRoot) {
-		// If there is a parentTreeViewItem, it means that the currentTreeViewItem was a dynamic one, so we add it to the parent
-		parentTreeViewItem.children.push(treeViewItem);
-	}
+export function traverseTreeAndCreateInstructions(
+	rootLView: LView,
+	isRoot: boolean
+) {
+	const instructions = [];
+	const addElement = (treeViewItem: TreeViewItem) =>
+		instructions.push(treeViewItem);
+	return traverseTreeToStructure(addElement, instructions)(rootLView, isRoot);
+}
 
-	const whenDynamicEmbeddedViewFound = (dynamicLView: LView) => {
-		traverseTree(
-			dynamicLView,
-			false,
-			treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
+const traverseTreeToStructure = (
+	addElement: (
+		treeViewItem: TreeViewItem,
+		parentTreeViewItem: TreeViewItem
+	) => void,
+	accumulator?: any
+) => {
+	return function traverseTree(
+		lView: LView,
+		isRoot: boolean,
+		parentTreeViewItem?: TreeViewItem
+	) {
+		const treeViewItem = createInitialTreeViewState(
+			lView,
+			isRoot,
+			parentTreeViewItem
+		);
+
+		// Only when the lView has a host element do we want to add it, otherwise it's a dynamicEmbeddedView
+		if (lView[HOST] && !isRoot) {
+			// If there is a parentTreeViewItem, it means that the currentTreeViewItem was a dynamic one, so we add it to the parent
+			addElement(treeViewItem, parentTreeViewItem);
+		}
+
+		const whenDynamicEmbeddedViewFound = (dynamicLView: LView) => {
+			traverseTree(
+				dynamicLView,
+				false,
+				treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
+			);
+		};
+
+		loopDynamicEmbeddedViews({
+			lView,
+			work: whenDynamicEmbeddedViewFound
+		});
+
+		const whenChildComponentFound = (childLView: LView) => {
+			if (!childLView[HOST][DEVTOOLS_IDENTIFIER]) {
+				childLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
+			}
+			traverseTree(
+				childLView,
+				false,
+				treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
+			);
+		};
+
+		loopChildComponents({ lView, work: whenChildComponentFound });
+
+		if (isRoot) {
+			return accumulator ? accumulator : treeViewItem;
+		}
+	};
+};
+
+export function transformTreeToInstructions(inputTreeViewItem: TreeViewItem) {
+	const instructions = new Map<string, TreeViewItem>();
+
+	const walkTree = (treeViewItem: TreeViewItem) => {
+		instructions.set(
+			treeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER],
+			treeViewItem
+		);
+		treeViewItem.children.forEach(childTreeViewItem =>
+			walkTree(childTreeViewItem)
 		);
 	};
 
-	loopDynamicEmbeddedViews({
-		lView,
-		work: whenDynamicEmbeddedViewFound
-	});
+	walkTree(inputTreeViewItem);
 
-	const whenChildComponentFound = (childLView: LView) => {
-		traverseTree(
-			childLView,
-			false,
-			treeViewItem.lView[HOST] ? treeViewItem : parentTreeViewItem
-		);
-	};
-
-	loopChildComponents({ lView, work: whenChildComponentFound });
-
-	if (isRoot) {
-		return treeViewItem;
-	}
+	return instructions;
 }
 
 // Because of dynamicEmbeddedViews and because we need to be able to walk the tree, some elements are added as parents which aren't

@@ -1,5 +1,5 @@
 import { HOST, LContainer, LView, TVIEW } from './types/angular_core';
-import { DEVTOOLS_IDENTIFIER, shouldLViewBeChecked } from './util';
+import { shouldLViewBeChecked } from './util';
 import { getRealParent, loopDynamicEmbeddedViews } from './tree-traversal';
 import {
 	createInitialTreeViewState,

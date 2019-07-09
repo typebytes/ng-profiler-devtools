@@ -1,5 +1,5 @@
-import { FLAGS, LView, LViewFlags, TVIEW } from './types/angular_core';
-import { DEVTOOLS_IDENTIFIER } from './util';
+import { FLAGS, HOST, LView, LViewFlags } from './types/angular_core';
+import { DEVTOOLS_IDENTIFIER } from './constants';
 
 export interface SerializedTreeViewItem {
 	// TODO: should become a serializable identifier later
@@ -46,7 +46,7 @@ export function serialiseTreeViewItem(
 ): SerializedTreeViewItem {
 	console.log(treeViewItem.lView[FLAGS] & 0b00000010000);
 	return {
-		uuid: treeViewItem.lView[0][DEVTOOLS_IDENTIFIER],
+		uuid: treeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER],
 		children: treeViewItem.children.map(loopTreeViewItem =>
 			serialiseTreeViewItem(loopTreeViewItem)
 		),

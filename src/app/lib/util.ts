@@ -9,8 +9,6 @@ import {
 	TYPE
 } from './types/angular_core';
 
-export const DEVTOOLS_IDENTIFIER = '__CD_PROFILER_ID__';
-
 export function monkeyPatchFunction(obj, property, monkeyPatchFn) {
 	obj[property] = monkeyPatchFn;
 }

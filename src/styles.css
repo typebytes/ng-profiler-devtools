@@ -45,3 +45,11 @@ body {
 svg {
 	overflow: hidden;
 }
+
+g.node-updated > rect {
+	stroke: blue;
+}
+
+g.node-normal > rect {
+	stroke: black;
+}
