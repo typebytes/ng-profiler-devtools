@@ -130,7 +130,6 @@ export class LViewStateManager {
 			treeViewItem
 		);
 
-		console.log('Added', childTreeViewItem.lView);
 		this.treeViewBuilder.addTreeViewItem(
 			childTreeViewItem,
 			getRealParent(treeViewItem)

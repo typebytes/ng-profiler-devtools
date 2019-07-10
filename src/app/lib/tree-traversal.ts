@@ -148,7 +148,6 @@ const traverseTreeToStructure = (
 
 		const whenChildComponentFound = (childLView: LView) => {
 			if (!childLView[HOST][DEVTOOLS_IDENTIFIER]) {
-				debugger;
 				childLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
 			}
 			traverseTree(

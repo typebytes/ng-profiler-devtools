@@ -24,7 +24,7 @@ import { Todo, TodoUtils } from '../todo/todo.model';
 			<ul class="todo-list">
 				<!--TODO: do something with filtered todos here-->
 				<li
-					*ngFor="let todo of todos"
+					*ngFor="let todo of todos; trackBy: trackById"
 					[ngClass]="{
 						completed: todo.completed,
 						editing: todo == currentTodo
@@ -61,6 +61,10 @@ export class TodosListComponent implements DoCheck {
 	snapshot: Todo;
 
 	constructor() {}
+
+	trackById(i, item: Todo) {
+		return item.id;
+	}
 
 	ngDoCheck() {
 		this.remaining = this.completed = 0;

@@ -46,5 +46,7 @@ export class TodoItemComponent implements OnInit {
 
 	constructor() {}
 
-	ngOnInit() {}
+	ngOnInit() {
+		console.log('initialised');
+	}
 }

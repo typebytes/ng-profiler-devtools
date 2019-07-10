@@ -48,12 +48,10 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 				renderTree('lastUpdatedTree', updatedTree);
 			});
 		}
-		debugger;
 		// Set the pointer to the next lView
 		lViewStateManager.getNextLView(null, rootLView);
 		const currentLView = lViewStateManager.predictedNextLView;
 		if (!currentLView[HOST][DEVTOOLS_IDENTIFIER]) {
-			debugger;
 			currentLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
 		}
 		origTemplate(...args);
