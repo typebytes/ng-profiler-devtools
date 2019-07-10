@@ -9,11 +9,13 @@ import {
 	traverseTreeAndCreateTreeStructure
 } from './tree-traversal';
 import { scheduleOutsideOfZone } from './zone-handler';
-import { renderTree } from './visualisation/graph';
+import { GraphRender, renderTree } from './visualisation/graph';
 import * as uuid from 'uuid';
 import { DEVTOOLS_IDENTIFIER } from './constants';
+import { serialiseTreeViewItem } from './tree-view-builder';
 
 const tracer = new Tracer();
+const treeGraph = new GraphRender('liveTree');
 const lViewStateManager = new LViewStateManager();
 
 const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
@@ -33,20 +35,25 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
 			scheduleOutsideOfZone(() => {
-				const updatedTree = lViewStateManager.getTree();
-				renderTree('updatedTree', updatedTree);
-				renderTree(
-					'tree',
-					traverseTreeAndCreateTreeStructure(rootLView, true),
-					transformTreeToInstructions(updatedTree)
+				console.log('cd done');
+				const updatedTree = serialiseTreeViewItem(lViewStateManager.getTree());
+				const entireTree = serialiseTreeViewItem(
+					traverseTreeAndCreateTreeStructure(rootLView, true)
 				);
+				const updatedTreeAsInstructions = transformTreeToInstructions(
+					updatedTree
+				);
+				console.log(entireTree, updatedTree);
+				treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
+				renderTree('lastUpdatedTree', updatedTree);
 			});
 		}
+		debugger;
 		// Set the pointer to the next lView
 		lViewStateManager.getNextLView(null, rootLView);
 		const currentLView = lViewStateManager.predictedNextLView;
 		if (!currentLView[HOST][DEVTOOLS_IDENTIFIER]) {
-			console.log('generating id for', currentLView[HOST].tagName);
+			debugger;
 			currentLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
 		}
 		origTemplate(...args);

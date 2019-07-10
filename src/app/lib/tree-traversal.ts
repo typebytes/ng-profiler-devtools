@@ -10,7 +10,11 @@ import {
 	VIEW_REFS
 } from './types/angular_core';
 import { getComponentViewByIndex } from './util';
-import { createInitialTreeViewState, TreeViewItem } from './tree-view-builder';
+import {
+	createInitialTreeViewState,
+	SerializedTreeViewItem,
+	TreeViewItem
+} from './tree-view-builder';
 import * as uuid from 'uuid';
 import { DEVTOOLS_IDENTIFIER } from './constants';
 
@@ -144,6 +148,7 @@ const traverseTreeToStructure = (
 
 		const whenChildComponentFound = (childLView: LView) => {
 			if (!childLView[HOST][DEVTOOLS_IDENTIFIER]) {
+				debugger;
 				childLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
 			}
 			traverseTree(
@@ -161,14 +166,13 @@ const traverseTreeToStructure = (
 	};
 };
 
-export function transformTreeToInstructions(inputTreeViewItem: TreeViewItem) {
-	const instructions = new Map<string, TreeViewItem>();
+export function transformTreeToInstructions(
+	inputTreeViewItem: SerializedTreeViewItem
+) {
+	const instructions = new Map<string, SerializedTreeViewItem>();
 
-	const walkTree = (treeViewItem: TreeViewItem) => {
-		instructions.set(
-			treeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER],
-			treeViewItem
-		);
+	const walkTree = (treeViewItem: SerializedTreeViewItem) => {
+		instructions.set(treeViewItem.uuid, treeViewItem);
 		treeViewItem.children.forEach(childTreeViewItem =>
 			walkTree(childTreeViewItem)
 		);

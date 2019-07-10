@@ -1,14 +1,14 @@
-import { TreeViewItem } from '../tree-view-builder';
+import { SerializedTreeViewItem } from '../tree-view-builder';
 import * as dagreD3 from 'dagre-d3';
+import { graphlib } from 'dagre-d3';
 import { select as d3Select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity as d3ZoomIdentity } from 'd3-zoom';
-import { HOST } from '../types/angular_core';
 import {
-	DEVTOOLS_IDENTIFIER,
+	COLORS_CLASSES,
 	NOT_UPDATED_NODE_CLASS_NAME,
 	UPDATED_NODE_CLASS_NAME
 } from '../constants';
-import { graphlib } from 'dagre-d3';
+import { PoolData, UpdatePoolManager } from './update-pool-manager';
 import Graph = graphlib.Graph;
 
 /**
@@ -20,8 +20,11 @@ import Graph = graphlib.Graph;
  */
 export function renderTree(
 	id: string,
-	treeViewItem: TreeViewItem,
-	updates?: Map<string, TreeViewItem>
+	treeViewItem: SerializedTreeViewItem,
+	updates?: Map<
+		string,
+		PoolData<SerializedTreeViewItem> | SerializedTreeViewItem
+	>
 ) {
 	// Create the input graph
 	const g: Graph = new dagreD3.graphlib.Graph()
@@ -44,9 +47,6 @@ export function renderTree(
 	render(inner as any, g);
 
 	const initialScale = 0.9;
-	console.log(g.graph().width);
-	console.log(+svg.attr('width'));
-	console.log((+svg.attr('width') - g.graph().width * 0.6) / 2);
 	const transform = d3ZoomIdentity
 		.translate((+svg.attr('width') - g.graph().width * 0.6) / 2, 20)
 		.scale(initialScale);
@@ -60,25 +60,50 @@ export function renderTree(
 // FIXME graph should be unaware of host and stuff
 export function walkTreeAndAddNodes(
 	g: Graph,
-	treeViewItem: TreeViewItem,
-	updates?: Map<string, TreeViewItem>
+	treeViewItem: SerializedTreeViewItem,
+	updates?: Map<
+		string,
+		PoolData<SerializedTreeViewItem> | SerializedTreeViewItem
+	>
 ) {
-	console.log(g.nodes());
-	const parentIdentifier = treeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER];
+	const parentIdentifier = treeViewItem.uuid;
 	if (updates && updates.has(parentIdentifier)) {
+		const data = updates.get(parentIdentifier);
 		g.setNode(parentIdentifier, {
-			label: treeViewItem.lView[HOST].tagName,
-			class: UPDATED_NODE_CLASS_NAME
+			label: treeViewItem.tagName,
+			class: (data as PoolData<SerializedTreeViewItem>).hit
+				? COLORS_CLASSES[(data as PoolData<SerializedTreeViewItem>).hit - 1]
+				: UPDATED_NODE_CLASS_NAME
 		});
 	} else {
 		g.setNode(parentIdentifier, {
-			label: treeViewItem.lView[HOST].tagName,
+			label: treeViewItem.tagName,
 			class: NOT_UPDATED_NODE_CLASS_NAME
 		});
 	}
 	treeViewItem.children.forEach(childTreeViewItem => {
-		const childIdentifier = childTreeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER];
+		const childIdentifier = childTreeViewItem.uuid;
 		walkTreeAndAddNodes(g, childTreeViewItem, updates);
 		g.setEdge(parentIdentifier, childIdentifier);
 	});
+}
+
+export class GraphRender extends UpdatePoolManager<SerializedTreeViewItem> {
+	private serializedTreeViewItem: SerializedTreeViewItem;
+
+	constructor(private id: string) {
+		super();
+	}
+
+	setUpdates(
+		serializedTreeViewItem: SerializedTreeViewItem,
+		updates: Map<string, SerializedTreeViewItem>
+	) {
+		this.serializedTreeViewItem = serializedTreeViewItem;
+		this.addAll(updates);
+	}
+
+	drawImpl(pool: Map<string, PoolData<SerializedTreeViewItem>>) {
+		renderTree(this.id, this.serializedTreeViewItem, this.pool);
+	}
 }

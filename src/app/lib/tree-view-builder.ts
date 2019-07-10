@@ -44,7 +44,6 @@ export class TreeViewBuilder {
 export function serialiseTreeViewItem(
 	treeViewItem: TreeViewItem
 ): SerializedTreeViewItem {
-	console.log(treeViewItem.lView[FLAGS] & 0b00000010000);
 	return {
 		uuid: treeViewItem.lView[HOST][DEVTOOLS_IDENTIFIER],
 		children: treeViewItem.children.map(loopTreeViewItem =>

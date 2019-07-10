@@ -1,26 +1,10 @@
+import { PoolData, UpdatePoolManager } from './update-pool-manager';
+import { COLORS, HOTTEST_COLOR, OUTLINE_COLOR } from '../constants';
+
 declare const Zone;
 
 // Id of the canvas node
 const CANVAS_NODE_ID = 'TraceUpdatesWebNodePresenter';
-
-// Outline color
-const OUTLINE_COLOR = '#f0f0f0';
-// Color values used in showing how 'hot' a certain rect is
-const COLORS = [
-	// coolest
-	'#55cef6',
-	'#55f67b',
-	'#a5f655',
-	'#f4f655',
-	'#f6a555',
-	'#f66855',
-	// hottest
-	'#ff0000'
-];
-const HOTTEST_COLOR = COLORS[COLORS.length - 1];
-
-// Duration of the rect being added
-const DURATION = 250;
 
 interface TracingMeasurement {
 	left: number;
@@ -36,112 +20,27 @@ interface TracingData {
 	measurement: TracingMeasurement;
 }
 
-export class Tracer {
+export class Tracer extends UpdatePoolManager<TracingMeasurement> {
 	// Canvas reference
 	canvas: HTMLCanvasElement;
-	pool = new Map<string, TracingData>();
-	_drawing;
-	_clearTimer;
 
 	present(uuid: string, tagName, measurement) {
-		let data;
-		if (this.pool.has(uuid)) {
-			data = this.pool.get(uuid);
-		} else {
-			data = {
-				hit: 0,
-				tagName,
-				measurement
-			};
-		}
-
-		data = {
-			...data,
-			expiration: Date.now() + DURATION,
-			hit: data.hit + 1
-		};
-
-		this.pool = this.pool.set(uuid, data);
-
-		// If we're already drawing, no use in setting a new event
-		if (this._drawing) {
-			return;
-		}
-
-		this._drawing = true;
-		// Draw on the next animationFrame, use Zone to make sure it doesn't trigger a CD cycle in Angular
-		Zone.root.run(() => {
-			requestAnimationFrame(this._draw.bind(this));
-		});
+		// Add this measurement to the pool of updates
+		this.add(uuid, tagName, measurement);
 	}
 
-	_draw() {
-		const now = Date.now();
-		let minExpiration = Number.MAX_VALUE;
-
-		// Calculate the 'nearest' expiration date
-		// Remove all the ones that already expired
-		const temp = new Map<string, TracingData>();
-		for (const [uuid, data] of this.pool.entries()) {
-			if (data.expiration > now) {
-				minExpiration = Math.min(data.expiration, minExpiration);
-				temp.set(uuid, data);
-			}
-		}
-		this.pool = temp;
-
-		this.drawImpl(this.pool);
-
-		if (this.pool.size > 0) {
-			if (this._clearTimer != null) {
-				clearTimeout(this._clearTimer);
-			}
-			this._clearTimer = Zone.root.run(() => {
-				setTimeout(this._redraw.bind(this), minExpiration - now);
-			});
-		}
-
-		this._drawing = false;
-	}
-
-	_redraw() {
-		this._clearTimer = null;
-		if (!this._drawing && this.pool.size > 0) {
-			this._drawing = true;
-			this._draw();
-		}
-	}
-
-	drawImpl(pool: Map<string, TracingData>) {
-		this._ensureCanvas();
+	drawImpl(pool: Map<string, PoolData<TracingMeasurement>>) {
+		this.ensureCanvas();
 		const canvas = this.canvas;
 		const ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		for (const [uuid, data] of pool.entries()) {
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
-			drawBorder(ctx, data.measurement, 1, color);
+			drawBorder(ctx, data.data, 1, color);
 		}
 	}
 
-	// TODO: figure out when to call this one
-	clearImpl() {
-		const canvas = this.canvas;
-		if (canvas === null) {
-			return;
-		}
-
-		if (!canvas.parentNode) {
-			return;
-		}
-
-		const ctx = canvas.getContext('2d');
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-		canvas.parentNode.removeChild(canvas);
-		this.canvas = null;
-	}
-
-	_ensureCanvas() {
+	private ensureCanvas() {
 		let canvas = this.canvas;
 		if (canvas === null || canvas === undefined) {
 			canvas =
