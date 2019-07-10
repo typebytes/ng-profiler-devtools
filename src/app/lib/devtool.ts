@@ -1,5 +1,5 @@
 import { HOST, LView, RootContext, TView, TVIEW } from './types/angular_core';
-import { createMeasurement, Tracer } from './tracing';
+import { createMeasurement, Tracer } from './visualisation/tracing';
 import { LViewStateManager } from './l-view-state-manager';
 import { readPatchedLView } from './util';
 import {
@@ -59,7 +59,7 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 		// been updated at this point yet.
 		scheduleOutsideOfZone(() =>
 			tracer.present(
-				currentLView,
+				currentLView[HOST][DEVTOOLS_IDENTIFIER],
 				currentLView[HOST].tagName,
 				createMeasurement(currentLView[0].getBoundingClientRect())
 			)

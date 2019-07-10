@@ -47,9 +47,16 @@ svg {
 }
 
 g.node-updated > rect {
-	stroke: blue;
+	stroke: lightblue;
+	fill: lightblue;
 }
 
 g.node-normal > rect {
 	stroke: black;
+	fill: white;
+}
+
+g.node-updated text {
+	fill: white;
+	font-weight: bolder;
 }

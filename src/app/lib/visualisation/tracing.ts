@@ -1,5 +1,3 @@
-import { LView } from './types/angular_core';
-
 declare const Zone;
 
 // Id of the canvas node
@@ -41,14 +39,14 @@ interface TracingData {
 export class Tracer {
 	// Canvas reference
 	canvas: HTMLCanvasElement;
-	pool = new Map<LView, TracingData>();
+	pool = new Map<string, TracingData>();
 	_drawing;
 	_clearTimer;
 
-	present(lView: LView, tagName, measurement) {
+	present(uuid: string, tagName, measurement) {
 		let data;
-		if (this.pool.has(lView)) {
-			data = this.pool.get(lView);
+		if (this.pool.has(uuid)) {
+			data = this.pool.get(uuid);
 		} else {
 			data = {
 				hit: 0,
@@ -63,7 +61,7 @@ export class Tracer {
 			hit: data.hit + 1
 		};
 
-		this.pool = this.pool.set(lView, data);
+		this.pool = this.pool.set(uuid, data);
 
 		// If we're already drawing, no use in setting a new event
 		if (this._drawing) {
@@ -83,11 +81,11 @@ export class Tracer {
 
 		// Calculate the 'nearest' expiration date
 		// Remove all the ones that already expired
-		const temp = new Map<LView, TracingData>();
-		for (const [lView, data] of this.pool.entries()) {
+		const temp = new Map<string, TracingData>();
+		for (const [uuid, data] of this.pool.entries()) {
 			if (data.expiration > now) {
 				minExpiration = Math.min(data.expiration, minExpiration);
-				temp.set(lView, data);
+				temp.set(uuid, data);
 			}
 		}
 		this.pool = temp;
@@ -114,12 +112,12 @@ export class Tracer {
 		}
 	}
 
-	drawImpl(pool: Map<LView, TracingData>) {
+	drawImpl(pool: Map<string, TracingData>) {
 		this._ensureCanvas();
 		const canvas = this.canvas;
 		const ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		for (const [lView, data] of pool.entries()) {
+		for (const [uuid, data] of pool.entries()) {
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;
 			drawBorder(ctx, data.measurement, 1, color);
 		}
