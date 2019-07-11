@@ -30,7 +30,6 @@ import { Todo } from '../todo/todo.model';
 			(keyup.esc)="cancelEdit.emit()"
 			class="edit"
 		/>
-		{{ todo }}
 	`,
 	styleUrls: ['./todo-item.component.css'],
 	changeDetection: ChangeDetectionStrategy.OnPush
@@ -46,7 +45,5 @@ export class TodoItemComponent implements OnInit {
 
 	constructor() {}
 
-	ngOnInit() {
-		console.log('initialised');
-	}
+	ngOnInit() {}
 }

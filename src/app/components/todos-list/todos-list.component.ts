@@ -24,7 +24,7 @@ import { Todo, TodoUtils } from '../todo/todo.model';
 			<ul class="todo-list">
 				<!--TODO: do something with filtered todos here-->
 				<li
-					*ngFor="let todo of todos; trackBy: trackById"
+					*ngFor="let todo of todos"
 					[ngClass]="{
 						completed: todo.completed,
 						editing: todo == currentTodo

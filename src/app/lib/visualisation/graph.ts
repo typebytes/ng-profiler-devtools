@@ -1,7 +1,7 @@
 import { SerializedTreeViewItem } from '../tree-view-builder';
 import * as dagreD3 from 'dagre-d3';
 import { graphlib } from 'dagre-d3';
-import { select as d3Select } from 'd3-selection';
+import { select as d3Select, event as d3Event } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity as d3ZoomIdentity } from 'd3-zoom';
 import {
 	COLORS_CLASSES,
@@ -47,6 +47,7 @@ export function renderTree(
 	render(inner as any, g);
 
 	const initialScale = 0.9;
+	console.log(svg.attr('width'));
 	const transform = d3ZoomIdentity
 		.translate((+svg.attr('width') - g.graph().width * 0.6) / 2, 20)
 		.scale(initialScale);
@@ -73,7 +74,7 @@ export function walkTreeAndAddNodes(
 			label: treeViewItem.tagName,
 			class: (data as PoolData<SerializedTreeViewItem>).hit
 				? COLORS_CLASSES[(data as PoolData<SerializedTreeViewItem>).hit - 1]
-				: UPDATED_NODE_CLASS_NAME
+				: COLORS_CLASSES[0]
 		});
 	} else {
 		g.setNode(parentIdentifier, {

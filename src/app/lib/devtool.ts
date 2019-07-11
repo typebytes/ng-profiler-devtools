@@ -35,7 +35,6 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
 			scheduleOutsideOfZone(() => {
-				console.log('cd done');
 				const updatedTree = serialiseTreeViewItem(lViewStateManager.getTree());
 				const entireTree = serialiseTreeViewItem(
 					traverseTreeAndCreateTreeStructure(rootLView, true)
@@ -43,9 +42,8 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 				const updatedTreeAsInstructions = transformTreeToInstructions(
 					updatedTree
 				);
-				console.log(entireTree, updatedTree);
 				treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
-				renderTree('lastUpdatedTree', updatedTree);
+				renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
 			});
 		}
 		// Set the pointer to the next lView

@@ -2,10 +2,8 @@ import { FLAGS, HOST, LView, LViewFlags } from './types/angular_core';
 import { DEVTOOLS_IDENTIFIER } from './constants';
 
 export interface SerializedTreeViewItem {
-	// TODO: should become a serializable identifier later
 	uuid: string;
 	children: SerializedTreeViewItem[];
-	checked: boolean;
 	onPush: boolean;
 	tagName: string;
 }
@@ -50,8 +48,7 @@ export function serialiseTreeViewItem(
 			serialiseTreeViewItem(loopTreeViewItem)
 		),
 		tagName: treeViewItem.lView[0].tagName,
-		onPush: (treeViewItem.lView[FLAGS] & LViewFlags.CheckAlways) === 0,
-		checked: false
+		onPush: (treeViewItem.lView[FLAGS] & LViewFlags.CheckAlways) === 0
 	};
 }
 
