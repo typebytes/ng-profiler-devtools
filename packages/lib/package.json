@@ -1,0 +1,17 @@
+{
+  "name": "@ng-devtools/lib",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "uuid": "^3.3.2",
+    "dagre-d3": "^0.6.3"
+  },
+  "devDendencies": {
+    "typescript": "3.4.5",
+    "tslint": "~5.17.0",
+    "@types/uuid": "^3.4.5",
+    "@types/d3": "^5.7.2",
+    "@types/dagre-d3": "^0.4.39"
+  }
+}

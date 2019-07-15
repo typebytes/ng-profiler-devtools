@@ -1,0 +1,92 @@
+@import '~todomvc-common/base.css';
+@import '~todomvc-app-css/index.css';
+
+@keyframes hide {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+body {
+	font: 300 14px 'Helvetica Neue', Helvetica;
+}
+
+.node rect,
+.node circle,
+.node ellipse {
+	stroke: #333;
+	fill: #fff;
+	stroke-width: 1px;
+}
+
+.edgePath path {
+	stroke: #333;
+	fill: #333;
+	stroke-width: 1.5px;
+}
+
+.graphs {
+	display: flex;
+	flex-direction: row;
+}
+
+.full-width {
+	width: 100vw;
+	position: relative;
+	left: 50%;
+	right: 50%;
+	margin-left: -50vw;
+	margin-right: -50vw;
+}
+
+svg {
+	overflow: hidden;
+}
+
+g.node-updated-1 > rect {
+	stroke: #55cef6;
+	fill: #55cef6;
+}
+
+g.node-updated-2 > rect {
+	stroke: #55f67b;
+	fill: #55f67b;
+}
+
+g.node-updated-3 > rect {
+	stroke: #a5f655;
+	fill: #a5f655;
+}
+
+g.node-updated-4 > rect {
+	stroke: #f4f655;
+	fill: #f4f655;
+}
+
+g.node-updated-5 > rect {
+	stroke: #f6a555;
+	fill: #f6a555;
+}
+
+g.node-updated-6 > rect {
+	stroke: #f66855;
+	fill: #f66855;
+}
+
+g.node-updated-7 > rect {
+	stroke: #ff0000;
+	fill: #ff0000;
+}
+
+g.node-normal > rect {
+	stroke: black;
+	fill: white;
+}
+
+g.node-updated text {
+	fill: white;
+	font-weight: bolder;
+}
