@@ -1,0 +1,32 @@
+{
+  "name": "Angular Profiler Devtools",
+  "short_name": "NG Profiler",
+  "version": "0.0.0.1",
+  "description": "Can be used to visualise CD cycles",
+  "devtools_page": "./devtools.html",
+  "background": {
+    "scripts": [
+      "background.bundle.js"
+    ],
+    "persistent": false
+  },
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [{
+    "matches": [
+      "<all_urls>"
+    ],
+    "js": [
+      "content-script.bundle.js"
+    ],
+    "run_at": "document_start"
+  }],
+  "web_accessible_resources": [
+    "node_modules/*",
+    "dist/*",
+    "*"
+  ],
+  "manifest_version": 2,
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
