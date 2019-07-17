@@ -29,6 +29,10 @@ export function isLView(
 	return Array.isArray(value) && typeof value[TYPE] === 'object';
 }
 
+export function isLContainer(value: LContainer | {} | null): value is LContainer {
+	return Array.isArray(value) && value[TYPE] === true;
+}
+
 export function readPatchedData(target: any): LView | LContext | null {
 	return target[MONKEY_PATCH_KEY_NAME];
 }
@@ -72,4 +76,12 @@ export function findAngularRootNode(node): LView {
 			}
 		}
 	}
+}
+
+export function mapToObject(map: Map<any, any>) {
+	const obj = {};
+	for (let [key, value] of map) {
+		obj[key] = value;
+	}
+	return obj;
 }

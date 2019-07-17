@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"stripInternal": true,
+		"experimentalDecorators": true,
+		"strictPropertyInitialization": false,
+		"moduleResolution": "node",
+		"outDir": "dist",
+		"sourceMap": true,
+		"declaration": true,
+		"inlineSources": true,
+		"lib": ["es2018", "dom", "es2017.object"],
+		"skipLibCheck": true,
+		"strict": false,
+		"downlevelIteration": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["src/**/*.spec.ts"]
+}

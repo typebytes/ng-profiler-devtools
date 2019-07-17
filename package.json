@@ -3,9 +3,15 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "prettier": "prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\""
+  },
   "workspaces": [
     "packages/*"
   ],
+  "dependencies": {
+    "@types/chrome": "0.0.86"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"

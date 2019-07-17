@@ -1,12 +1,13 @@
 {
   "name": "@ng-devtools/plugin",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A simple Webpack 2 starter with TypeScript transpilation",
-  "main": "index.js",
+  "main": "dist/index.bundle.js",
   "scripts": {
     "start": "webpack-dev-server --port 9000 --inline --progress --profile --colors --watch --content-base src/",
-    "prebuild": "shx rm -rf ./dist/ && cd ../devtools-page && yarn build",
-    "build": "webpack --config webpack.config.js && shx cp -r ../devtools-page/build/* ./dist/ && cp manifest.json ./dist/ && cp ./src/devtools.html ./dist/",
+    "prebuild": "yarn build:lib && shx rm -rf ./dist/ && cd ../devtools-page && yarn build",
+    "build:lib": "cd ../lib && yarn build",
+    "build": "webpack --config webpack.config.js && shx cp -r ../devtools-page/build/* ./dist/ && shx cp -r ./popup.html ./dist/ && cp manifest.json ./dist/ && cp ./src/devtools.html ./dist/",
     "build:prod": "webpack --config webpack.config.js -p",
     "test": "karma start karma.config.js"
   },
@@ -22,7 +23,7 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "@types/core-js": "0.9.42",
+    "@types/chrome": "0.0.86",
     "@types/node": "7.0.0",
     "shx": "0.2.2",
     "tslint": "4.3.1",
@@ -31,8 +32,5 @@
     "webpack-cli": "3.3.6",
     "typescript": "3.5.3",
     "ts-loader": "6.0.4"
-  },
-  "dependencies": {
-    "@types/chrome": "0.0.47"
   }
 }

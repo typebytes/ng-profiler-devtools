@@ -30,7 +30,7 @@ body {
 
 .graphs {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 }
 
 .full-width {

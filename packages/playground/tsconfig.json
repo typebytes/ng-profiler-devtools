@@ -1,6 +1,7 @@
 {
 	"compileOnSave": false,
 	"include": [".", "../lib"],
+	"exclude": ["**/core-js"],
 	"compilerOptions": {
 		"downlevelIteration": true,
 		"importHelpers": true,
@@ -12,8 +13,8 @@
 		"experimentalDecorators": true,
 		"target": "es2015",
 		"typeRoots": ["node_modules/@types"],
-		"lib": ["es2017", "dom"],
-		"module": "esnext",
+		"lib": ["dom"],
+		"module": "commonjs",
 		"baseUrl": "./"
 	}
 }

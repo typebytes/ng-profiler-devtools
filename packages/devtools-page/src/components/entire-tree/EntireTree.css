@@ -1,0 +1,72 @@
+.entireTree {
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+p {
+    text-align: left;
+}
+
+svg#liveTree {
+    border: 1px solid lightgray;
+}
+
+.chart {
+    min-width: 100%;
+}
+
+.chart-container {
+    width: 100%;
+    display: flex;
+}
+
+.legend {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+    margin: 10px;
+}
+
+.legend-item {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 3px;
+}
+
+.legend-box {
+    min-width: 14px;
+    min-height: 14px;
+    border: 1px solid black;
+    margin-right: 10px;
+}
+
+.first {
+    background-color: #55cef6;
+}
+
+.second {
+    background-color: #55f67b;
+}
+
+.third {
+    background-color: #a5f655;
+}
+
+.fourth {
+    background-color: #f4f655;
+}
+
+.fifth {
+    background-color: #f6a555;
+}
+
+.sixth {
+    background-color: #f66855;
+}
+
+.seventh {
+    background-color: #ff0000;
+}
+

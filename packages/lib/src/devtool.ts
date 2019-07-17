@@ -1,7 +1,7 @@
 import { HOST, LView, RootContext, TView, TVIEW } from './types/angular_core';
 import { createMeasurement, Tracer } from './visualisation/tracing';
 import { LViewStateManager } from './l-view-state-manager';
-import { readPatchedLView } from './util';
+import { mapToObject, readPatchedLView } from './util';
 import {
 	loopChildComponents,
 	loopDynamicEmbeddedViews,
@@ -13,10 +13,13 @@ import { GraphRender, renderTree } from './visualisation/graph';
 import * as uuid from 'uuid';
 import { DEVTOOLS_IDENTIFIER } from './constants';
 import { serialiseTreeViewItem } from './tree-view-builder';
+import { sendMessage } from './messaging';
 
 const tracer = new Tracer();
 const treeGraph = new GraphRender('liveTree');
 const lViewStateManager = new LViewStateManager();
+
+let patchedTemplateFns: Array<{tView: TView, origTemplate: Function}> = [];
 
 const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 	if ((tView.template as any).__template_patched__) {
@@ -44,6 +47,14 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 				);
 				treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
 				renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
+				sendMessage({
+					type: 'ENTIRE_TREE',
+					payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
+				});
+				sendMessage({
+					type: 'UPDATED_TREE',
+					payload: {updatedTree}
+				});
 			});
 		}
 		// Set the pointer to the next lView
@@ -69,6 +80,8 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 		);
 	};
 	(tView.template as any).__template_patched__ = true;
+
+	patchedTemplateFns.push({origTemplate: origTemplate, tView});
 };
 
 export function monkeyPatchDirectChildren(lView: LView, isRoot = false) {
@@ -98,4 +111,11 @@ export function monkeyPatchRootNode(rootContext: RootContext) {
 		const rootComponentLView = readPatchedLView(rootComponent);
 		monkeyPatchDirectChildren(rootComponentLView, true);
 	}
+}
+
+export function undoMonkeyPatch() {
+	patchedTemplateFns.forEach(data => {
+		data.tView.template = data.origTemplate;
+	});
+	patchedTemplateFns = [];
 }

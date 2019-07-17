@@ -1,0 +1,38 @@
+
+.sidebar {
+    color: rgb(90, 90, 90);
+    width: 160px;
+    overflow-x: hidden;
+    background-color: rgb(243, 243, 243);
+    border-right: 1px solid rgb(48, 57, 66);
+}
+
+.sidebar ol {
+    list-style-type: none;
+    padding: 0 0 10px 12px;
+}
+
+.sidebar ol li {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: rgb(90, 90, 90);
+    min-height: 20px;
+    cursor: pointer;
+}
+
+.sidebar ol li.header {
+    display: block;
+}
+
+.sidebar ol li.header > span {
+    display: block;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.sidebar ol li .logo {
+    padding-right: 6px;
+}
