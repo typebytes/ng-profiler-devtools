@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
   "dependencies": {
     "uuid": "^3.3.2",
     "dagre-d3": "^0.6.3"
@@ -13,5 +17,14 @@
     "@types/uuid": "^3.4.5",
     "@types/d3": "^5.7.2",
     "@types/dagre-d3": "^0.4.39"
+  },
+  "devDependencies": {
+    "webpack": "4.35.3",
+    "webpack-dev-server": "3.7.2",
+    "webpack-cli": "3.3.6",
+    "ts-loader": "6.0.4"
+  },
+  "__processed_by_ivy_ngcc__": {
+    "main": "8.0.1"
   }
 }

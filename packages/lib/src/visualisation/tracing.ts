@@ -32,7 +32,7 @@ export class Tracer extends UpdatePoolManager<TracingMeasurement> {
 	drawImpl(pool: Map<string, PoolData<TracingMeasurement>>) {
 		this.ensureCanvas();
 		const canvas = this.canvas;
-		const ctx = canvas.getContext('2d');
+		const ctx: any = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		for (const [uuid, data] of pool.entries()) {
 			const color = COLORS[data.hit - 1] || HOTTEST_COLOR;

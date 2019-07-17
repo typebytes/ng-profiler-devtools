@@ -7,6 +7,10 @@
 
 # dependencies
 /node_modules
+packages/lib/node_modules
+packages/plugin/node_modules
+packages/devtools-page/node_modules
+packages/playground/node_modules
 
 # IDEs and editors
 /.idea

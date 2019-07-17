@@ -1,6 +1,6 @@
 import {
 	ACTIVE_INDEX,
-	CHILD_HEAD,
+	CHILD_HEAD, CONTAINER_HEADER_OFFSET,
 	HEADER_OFFSET,
 	HOST,
 	LContainer,
@@ -9,7 +9,7 @@ import {
 	TVIEW,
 	VIEW_REFS
 } from './types/angular_core';
-import { getComponentViewByIndex } from './util';
+import { getComponentViewByIndex, isLContainer } from './util';
 import {
 	createInitialTreeViewState,
 	SerializedTreeViewItem,
@@ -36,33 +36,51 @@ export function loopDynamicEmbeddedViews({
 	nextViewRefIndex?: number;
 	exitLoopPrematurely?: boolean;
 }) {
-	for (
-		let current: LContainer =
-			nextCurrentLContainer !== undefined
-				? nextCurrentLContainer
-				: lView[CHILD_HEAD];
-		current !== null;
-		current = current[NEXT]
-	) {
-		if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
-			for (
-				let i = nextViewRefIndex ? nextViewRefIndex : 0;
-				i < current[VIEW_REFS].length;
-				i++
-			) {
-				const dynamicViewData = current[VIEW_REFS][i];
+	let viewOrContainer = nextCurrentLContainer !== undefined ? nextCurrentLContainer : lView[CHILD_HEAD];
+	while (viewOrContainer !== null) {
+		if (isLContainer(viewOrContainer) && viewOrContainer[ACTIVE_INDEX] === -1) {
+			for (let i = nextViewRefIndex || CONTAINER_HEADER_OFFSET; i < viewOrContainer.length; i++) {
+				const embeddedLView = viewOrContainer[i];
 				work(
-					dynamicViewData,
-					i === current[VIEW_REFS].length - 1,
+					embeddedLView,
+					i === viewOrContainer[VIEW_REFS].length - 1,
 					i,
-					current[NEXT]
+					viewOrContainer[NEXT]
 				);
 				if (exitLoopPrematurely) {
 					return true;
 				}
 			}
 		}
+		viewOrContainer = viewOrContainer[NEXT];
 	}
+	// for (
+	// 	let current: LContainer =
+	// 		nextCurrentLContainer !== undefined
+	// 			? nextCurrentLContainer
+	// 			: lView[CHILD_HEAD];
+	// 	current !== null;
+	// 	current = current[NEXT]
+	// ) {
+	// 	if (current.length < HEADER_OFFSET && current[ACTIVE_INDEX] === -1) {
+	// 		for (
+	// 			let i = nextViewRefIndex ? nextViewRefIndex : 0;
+	// 			i < current[VIEW_REFS].length;
+	// 			i++
+	// 		) {
+	// 			const dynamicViewData = current[VIEW_REFS][i];
+	// 			work(
+	// 				dynamicViewData,
+	// 				i === current[VIEW_REFS].length - 1,
+	// 				i,
+	// 				current[NEXT]
+	// 			);
+	// 			if (exitLoopPrematurely) {
+	// 				return true;
+	// 			}
+	// 		}
+	// 	}
+	// }
 	return false;
 }
 

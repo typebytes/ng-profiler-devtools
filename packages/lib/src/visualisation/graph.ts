@@ -1,13 +1,9 @@
 import { SerializedTreeViewItem } from '../tree-view-builder';
 import * as dagreD3 from 'dagre-d3';
 import { graphlib } from 'dagre-d3';
-import { select as d3Select, event as d3Event } from 'd3-selection';
+import { event as d3Event, select as d3Select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity as d3ZoomIdentity } from 'd3-zoom';
-import {
-	COLORS_CLASSES,
-	NOT_UPDATED_NODE_CLASS_NAME,
-	UPDATED_NODE_CLASS_NAME
-} from '../constants';
+import { COLORS_CLASSES, NOT_UPDATED_NODE_CLASS_NAME } from '../constants';
 import { PoolData, UpdatePoolManager } from './update-pool-manager';
 import Graph = graphlib.Graph;
 
@@ -37,25 +33,40 @@ export function renderTree(
 
 	const svg = d3Select(`svg#${id}`),
 		inner = svg.select('g');
+	const firstRender = (inner.node() as any).children.length === 0;
 
 	const zoom = d3Zoom().on('zoom', function() {
-		// inner.attr('transform', d3Event.transform);
+		inner.attr('transform', d3Event.transform);
 	});
-	// svg.call(zoom);
+	svg.call(zoom as any);
 
 	const render = new dagreD3.render();
 	render(inner as any, g);
 
-	const initialScale = 0.9;
-	console.log(svg.attr('width'));
+	if (firstRender) {
+		zoomFit(svg, inner, zoom);
+	}
+}
+
+function zoomFit(root, inner, zoom) {
+	var bounds = root.node().getBBox();
+	var parent = root.node().parentElement;
+	var fullWidth = parent.clientWidth,
+		fullHeight = parent.clientHeight;
+	var width = bounds.width,
+		height = bounds.height;
+	var midX = bounds.x + width / 2,
+		midY = bounds.y + height / 2;
+	if (width === 0 || height === 0) return; // nothing to fit
+	var scale = 0.75 / Math.max(width / fullWidth, height / fullHeight);
+	var translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
 	const transform = d3ZoomIdentity
-		.translate((+svg.attr('width') - g.graph().width * 0.6) / 2, 20)
-		.scale(initialScale);
-	(inner as any)
+		.translate(translate[0], translate[1])
+		.scale(scale);
+	root
 		.transition()
-		.duration(0)
+		.duration(0) // milliseconds
 		.call(zoom.transform, transform);
-	svg.attr('height', g.graph().height * initialScale + 200);
 }
 
 // FIXME graph should be unaware of host and stuff
@@ -98,7 +109,7 @@ export class GraphRender extends UpdatePoolManager<SerializedTreeViewItem> {
 
 	setUpdates(
 		serializedTreeViewItem: SerializedTreeViewItem,
-		updates: Map<string, SerializedTreeViewItem>
+		updates?: Map<string, SerializedTreeViewItem> | Object
 	) {
 		this.serializedTreeViewItem = serializedTreeViewItem;
 		this.addAll(updates);

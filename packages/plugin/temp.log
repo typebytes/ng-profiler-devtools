@@ -64,7 +64,7 @@ content-script.bundle.js.map   4.3 kB       2  [emitted]  content-script
    [0] ./background/background.ts 2.34 kB {3} [built]
    [1] ./content-script/content-script.ts 1.29 kB {2} [built]
    [2] ./devtools/devtools.ts 85 bytes {1} [built]
-   [3] ./injected/rx-devtools.ts 26 bytes {0} [built]
+   [3] ./injected/ng-devtools.ts 26 bytes {0} [built]
 
 ERROR in [at-loader] [31m../../node_modules/@babel/parser/typings/babel-parser.d.ts[39m:11:64 
     [31mType expected.[39m
@@ -26916,13 +26916,13 @@ ERROR in [at-loader] [31m../../node_modules/@types/istanbul-lib-coverage/index.
     [31mCannot find name 'object'.[39m
 
 ERROR in [at-loader] [31m../../node_modules/@types/istanbul-lib-report/index.d.ts[39m:13:34 
-    [31mGeneric type 'Tree<N, Node>' requires 2 type argument(s).[39m
+    [31mGeneric type 'AppContent<N, Node>' requires 2 type argument(s).[39m
 
 ERROR in [at-loader] [31m../../node_modules/@types/istanbul-lib-report/index.d.ts[39m:14:36 
-    [31mGeneric type 'Tree<N, Node>' requires 2 type argument(s).[39m
+    [31mGeneric type 'AppContent<N, Node>' requires 2 type argument(s).[39m
 
 ERROR in [at-loader] [31m../../node_modules/@types/istanbul-lib-report/index.d.ts[39m:15:33 
-    [31mGeneric type 'Tree<N, Node>' requires 2 type argument(s).[39m
+    [31mGeneric type 'AppContent<N, Node>' requires 2 type argument(s).[39m
 
 ERROR in [at-loader] [31m../../node_modules/@types/istanbul-lib-report/index.d.ts[39m:58:17 
     [31mGeneric type 'Visitor<N, Node>' requires 2 type argument(s).[39m
