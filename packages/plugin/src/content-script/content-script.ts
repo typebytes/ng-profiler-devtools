@@ -51,7 +51,6 @@ window.addEventListener('ContentScriptEvent', function (event: any) {
 
 // Listen for messages from the popup script and background page
 chrome.runtime.onMessage.addListener(async function (request: Message, sender, sendResponse) {
-	console.log('received message', request, sender);
 	if (HANDLERS[request.action]) {
 		// console.log('found handler', request.action);
 		HANDLERS[request.action](request.payload);
@@ -62,7 +61,6 @@ chrome.runtime.onMessage.addListener(async function (request: Message, sender, s
 });
 
 async function isAngularApp() {
-	console.log('sending to popup');
 	const sendToPopup = (isAngularApp) => {
 		chrome.runtime.sendMessage({type: ContentScriptEvents.IS_ANGULAR, source: EventSource.CONTENT_SCRIPT, payload: isAngularApp});
 	};

@@ -29,7 +29,6 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 	}
 	const origTemplate = tView.template;
 	tView.template = function (...args) {
-		console.log(rootLView, args[0], cdCycleCountInCurrentLoop);
 		if (rootLView) {
 			cdCycleCountInCurrentLoop++;
 		}
@@ -37,14 +36,12 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 		const mode = args[0];
 		// Don't get the next lView if we are in creation mode as it will be called immediately in update mode
 		if (mode === 1 || cdCycleCountInCurrentLoop !== 1) {
-			console.log('short circuiting');
 			origTemplate(...args);
 			return;
 		}
 		if (rootLView) {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
-			console.log('scheduled!');
 			scheduleOutsideOfZone(() => {
 				cdCycleCountInCurrentLoop = 0;
 				const updatedTree = serialiseTreeViewItem(lViewStateManager.getTree());
@@ -73,7 +70,6 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 						payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
 					}
 				}));
-				console.log('updatedTree', updatedTree);
 				window.dispatchEvent(new CustomEvent('ContentScriptEvent', {
 					detail: {
 						type: 'UPDATED_TREE',

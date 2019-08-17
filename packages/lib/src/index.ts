@@ -8,15 +8,16 @@ export * from './visualisation';
 declare const document;
 
 export function startTracing() {
-	console.log('starting tracing');
-	setTimeout(() => {
+	// Checking every 100ms if Angular is already booted or not
+	const intervalId = setInterval(() => {
 		const angularRootNode = findAngularRootNode(document.body);
 		if (angularRootNode) {
+			clearInterval(intervalId);
 			monkeyPatchRootNode(angularRootNode[
 				CONTEXT
 				] as RootContext);
 		}
-	}, 2000);
+	}, 100);
 }
 
 export function stopTracing() {
