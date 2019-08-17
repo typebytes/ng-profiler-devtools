@@ -20,10 +20,10 @@ export class EntireTree extends React.Component<EntireTreeProps> {
 	}
 
 	render() {
-		console.log('render triggered');
+		// console.log('render triggered');
 		const {entireTree, instructions} = this.props.store;
 		setTimeout(() => {
-			console.log('triggered');
+			// console.log('triggered');
 			this.treeGraph.setUpdates(entireTree, instructions);
 		});
 		const test = this.props.store.test;

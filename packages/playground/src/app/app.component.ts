@@ -7,6 +7,6 @@ import { startTracing } from '../../../lib/src';
 })
 export class AppComponent {
 	constructor() {
-		// startTracing();
+		startTracing();
 	}
 }

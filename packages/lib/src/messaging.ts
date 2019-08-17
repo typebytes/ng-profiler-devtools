@@ -1,9 +1,11 @@
+import { scheduleOutsideOfZone } from './zone-handler';
+
 export function sendMessage(message) {
-	window.postMessage(
+	scheduleOutsideOfZone(() => window.postMessage(
 		{
 			message: message,
 			source: 'ngProfilerDevtoolsInjectedScript'
 		},
 		'*'
-	);
+	));
 }

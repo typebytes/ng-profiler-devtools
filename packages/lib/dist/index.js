@@ -9,6 +9,7 @@ var angular_core_1 = require("./types/angular_core");
 __export(require("./tree-view-builder"));
 __export(require("./visualisation"));
 function startTracing() {
+    console.log('starting tracing');
     setTimeout(function () {
         var angularRootNode = util_1.findAngularRootNode(document.body);
         if (angularRootNode) {
@@ -22,7 +23,7 @@ function stopTracing() {
 }
 exports.stopTracing = stopTracing;
 function isAngularApp() {
-    console.log('trying to find angular root node', util_1.findAngularRootNode(document.body));
+    // console.log('trying to find angular root node', findAngularRootNode(document.body));
     return util_1.findAngularRootNode(document.body) !== undefined;
 }
 exports.isAngularApp = isAngularApp;

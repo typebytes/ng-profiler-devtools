@@ -51,7 +51,7 @@ var UpdatePoolManager = /** @class */ (function () {
                 ? items.entries()
                 : Object.entries(items)), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var _d = __read(_c.value, 2), uuid = _d[0], dataToAdd = _d[1];
-                console.log('pool length', this.pool.size);
+                // console.log('pool length', this.pool.size);
                 var data = void 0;
                 if (this.pool.has(uuid)) {
                     data = this.pool.get(uuid);
@@ -63,9 +63,9 @@ var UpdatePoolManager = /** @class */ (function () {
                         data: dataToAdd
                     };
                 }
-                console.log(data);
+                // console.log(data);
                 data = __assign({}, data, { expiration: Date.now() + DURATION, hit: data.hit + 1 });
-                console.log(data);
+                // console.log(data);
                 this.pool.set(uuid, data);
             }
         }
@@ -128,7 +128,6 @@ var UpdatePoolManager = /** @class */ (function () {
             if (this.clearTimer != null) {
                 clearTimeout(this.clearTimer);
             }
-            // FIXME: clean this up
             this.clearTimer = setTimeout(this.redraw.bind(this), minExpiration - now);
         }
         this.drawing = false;
@@ -145,15 +144,15 @@ var UpdatePoolManager = /** @class */ (function () {
         if (this.drawing) {
             return;
         }
-        // FIXME fix this tshit
+        // FIXME fix this shit
         this.drawing = true;
         // Draw on the next animationFrame, use Zone to make sure it doesn't trigger a CD cycle in Angular
         // if (Zone) {
         //   Zone.root.run(() => {
-        //     requestAnimationFrame(this.draw.bind(this));
+        requestAnimationFrame(this.draw.bind(this));
         //   });
         // } else {
-        requestAnimationFrame(this.draw.bind(this));
+        // scheduleOutsideOfZone(() => requestAnimationFrame(this.draw.bind(this)));
         // }
     };
     return UpdatePoolManager;

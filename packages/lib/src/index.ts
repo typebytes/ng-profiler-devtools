@@ -8,6 +8,7 @@ export * from './visualisation';
 declare const document;
 
 export function startTracing() {
+	console.log('starting tracing');
 	setTimeout(() => {
 		const angularRootNode = findAngularRootNode(document.body);
 		if (angularRootNode) {
@@ -23,7 +24,7 @@ export function stopTracing() {
 }
 
 export function isAngularApp() {
-	console.log('trying to find angular root node', findAngularRootNode(document.body));
+	// console.log('trying to find angular root node', findAngularRootNode(document.body));
 	return findAngularRootNode(document.body) !== undefined;
 }
 

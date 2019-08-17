@@ -7,18 +7,20 @@ var uuid = require("uuid");
 var constants_1 = require("./constants");
 function loopDynamicEmbeddedViews(_a) {
     var lView = _a.lView, work = _a.work, nextCurrentLContainer = _a.nextCurrentLContainer, nextViewRefIndex = _a.nextViewRefIndex, _b = _a.exitLoopPrematurely, exitLoopPrematurely = _b === void 0 ? false : _b;
-    var viewOrContainer = nextCurrentLContainer !== undefined ? nextCurrentLContainer : lView[angular_core_1.CHILD_HEAD];
-    while (viewOrContainer !== null) {
-        if (util_1.isLContainer(viewOrContainer) && viewOrContainer[angular_core_1.ACTIVE_INDEX] === -1) {
-            for (var i = nextViewRefIndex || angular_core_1.CONTAINER_HEADER_OFFSET; i < viewOrContainer.length; i++) {
-                var embeddedLView = viewOrContainer[i];
-                work(embeddedLView, i === viewOrContainer[angular_core_1.VIEW_REFS].length - 1, i, viewOrContainer[angular_core_1.NEXT]);
+    for (var current = nextCurrentLContainer !== undefined
+        ? nextCurrentLContainer
+        : lView[angular_core_1.CHILD_HEAD]; current !== null; current = current[angular_core_1.NEXT]) {
+        if (current[angular_core_1.ACTIVE_INDEX] === -1 && util_1.isLContainer(current)) {
+            for (var i = nextViewRefIndex ? nextViewRefIndex : angular_core_1.CONTAINER_HEADER_OFFSET; i < current.length; i++) {
+                var dynamicViewData = current[i];
+                work(dynamicViewData, i >= current.length, i, current[angular_core_1.NEXT]);
                 if (exitLoopPrematurely) {
                     return true;
                 }
             }
+            // reset potential old pointers
+            nextViewRefIndex = undefined;
         }
-        viewOrContainer = viewOrContainer[angular_core_1.NEXT];
     }
     // for (
     // 	let current: LContainer =

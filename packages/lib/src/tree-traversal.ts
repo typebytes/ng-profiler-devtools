@@ -36,23 +36,30 @@ export function loopDynamicEmbeddedViews({
 	nextViewRefIndex?: number;
 	exitLoopPrematurely?: boolean;
 }) {
-	let viewOrContainer = nextCurrentLContainer !== undefined ? nextCurrentLContainer : lView[CHILD_HEAD];
-	while (viewOrContainer !== null) {
-		if (isLContainer(viewOrContainer) && viewOrContainer[ACTIVE_INDEX] === -1) {
-			for (let i = nextViewRefIndex || CONTAINER_HEADER_OFFSET; i < viewOrContainer.length; i++) {
-				const embeddedLView = viewOrContainer[i];
+	for (
+		let current: LContainer =
+			nextCurrentLContainer !== undefined
+				? nextCurrentLContainer
+				: lView[CHILD_HEAD];
+		current !== null;
+		current = current[NEXT]
+	) {
+		if (current[ACTIVE_INDEX] === -1 && isLContainer(current)) {
+			for (let i = nextViewRefIndex ? nextViewRefIndex : CONTAINER_HEADER_OFFSET; i < current.length; i++) {
+				const dynamicViewData = current[i];
 				work(
-					embeddedLView,
-					i === viewOrContainer[VIEW_REFS].length - 1,
+					dynamicViewData,
+					i >= current.length,
 					i,
-					viewOrContainer[NEXT]
+					current[NEXT]
 				);
 				if (exitLoopPrematurely) {
 					return true;
 				}
 			}
+			// reset potential old pointers
+			nextViewRefIndex = undefined;
 		}
-		viewOrContainer = viewOrContainer[NEXT];
 	}
 	// for (
 	// 	let current: LContainer =
