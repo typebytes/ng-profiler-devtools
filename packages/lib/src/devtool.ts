@@ -9,35 +9,44 @@ import {
 	traverseTreeAndCreateTreeStructure
 } from './tree-traversal';
 import { scheduleOutsideOfZone } from './zone-handler';
-import { GraphRender, renderTree } from './visualisation/graph';
+import { GraphRender } from './visualisation/graph';
 import * as uuid from 'uuid';
 import { DEVTOOLS_IDENTIFIER } from './constants';
 import { serialiseTreeViewItem } from './tree-view-builder';
-import { sendMessage } from './messaging';
 
 const tracer = new Tracer();
 const treeGraph = new GraphRender('liveTree');
 const lViewStateManager = new LViewStateManager();
 
-let patchedTemplateFns: Array<{tView: TView, origTemplate: Function}> = [];
+let patchedTemplateFns: Array<{ tView: TView, origTemplate: Function }> = [];
 
+// In dev mode, there will be two cycles. The second cycle is purely used for making sure the unidirectional data flow is followed and
+// should not be visualised. We opt to not track this second cycle.
+let cdCycleCountInCurrentLoop = 0;
 const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 	if ((tView.template as any).__template_patched__) {
 		return;
 	}
 	const origTemplate = tView.template;
-	tView.template = function(...args) {
+	tView.template = function (...args) {
+		console.log(rootLView, args[0], cdCycleCountInCurrentLoop);
+		if (rootLView) {
+			cdCycleCountInCurrentLoop++;
+		}
 		// Mode will be 1 for creation and 2 for update
 		const mode = args[0];
 		// Don't get the next lView if we are in creation mode as it will be called immediately in update mode
-		if (mode === 1) {
+		if (mode === 1 || cdCycleCountInCurrentLoop !== 1) {
+			console.log('short circuiting');
 			origTemplate(...args);
 			return;
 		}
 		if (rootLView) {
 			// If we have the rootLView, it means that we have started a new cycle
 			lViewStateManager.resetState();
+			console.log('scheduled!');
 			scheduleOutsideOfZone(() => {
+				cdCycleCountInCurrentLoop = 0;
 				const updatedTree = serialiseTreeViewItem(lViewStateManager.getTree());
 				const entireTree = serialiseTreeViewItem(
 					traverseTreeAndCreateTreeStructure(rootLView, true)
@@ -45,21 +54,39 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 				const updatedTreeAsInstructions = transformTreeToInstructions(
 					updatedTree
 				);
-				treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
-				renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
-				sendMessage({
-					type: 'ENTIRE_TREE',
-					payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
-				});
-				sendMessage({
-					type: 'UPDATED_TREE',
-					payload: {updatedTree}
-				});
+				// treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
+				// renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
+				// const events = new CustomEvent('PassToBackground', {detail: message});
+
+				// sendMessage({
+				// 	type: 'ENTIRE_TREE',
+				// 	payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
+				// });
+				// sendMessage({
+				// 	type: 'UPDATED_TREE',
+				// 	payload: {updatedTree}
+				// });
+				// window.postMessage('whatever', '*');
+				window.dispatchEvent(new CustomEvent('ContentScriptEvent', {
+					detail: {
+						type: 'ENTIRE_TREE',
+						payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
+					}
+				}));
+				console.log('updatedTree', updatedTree);
+				window.dispatchEvent(new CustomEvent('ContentScriptEvent', {
+					detail: {
+						type: 'UPDATED_TREE',
+						payload: {updatedTree}
+					}
+				}));
 			});
 		}
 		// Set the pointer to the next lView
 		lViewStateManager.getNextLView(null, rootLView);
 		const currentLView = lViewStateManager.predictedNextLView;
+		// console.log('CD for ', currentLView[HOST].tagName);
+
 		if (!currentLView[HOST][DEVTOOLS_IDENTIFIER]) {
 			currentLView[HOST][DEVTOOLS_IDENTIFIER] = uuid();
 		}
@@ -71,12 +98,14 @@ const monkeyPatchTemplate = (tView: TView, rootLView?: LView) => {
 
 		// Lastly, we need to update the Tracer to show a box. This has to be done in a timeout as the view dimensions have not
 		// been updated at this point yet.
-		scheduleOutsideOfZone(() =>
-			tracer.present(
-				currentLView[HOST][DEVTOOLS_IDENTIFIER],
-				currentLView[HOST].tagName,
-				createMeasurement(currentLView[0].getBoundingClientRect())
-			)
+		scheduleOutsideOfZone(() => {
+				// console.log(`Tracing for ${currentLView[HOST].tagName}`, currentLView[HOST]);
+				tracer.present(
+					currentLView[HOST][DEVTOOLS_IDENTIFIER],
+					currentLView[HOST].tagName,
+					createMeasurement(currentLView[0].getBoundingClientRect())
+				);
+			}
 		);
 	};
 	(tView.template as any).__template_patched__ = true;
@@ -94,7 +123,7 @@ export function monkeyPatchDirectChildren(lView: LView, isRoot = false) {
 		whenChildComponentFound = (childLView: LView) =>
 			monkeyPatchTemplate(childLView[TVIEW]);
 	}
-	loopChildComponents({ lView, work: whenChildComponentFound });
+	loopChildComponents({lView, work: whenChildComponentFound});
 	// Find components in the dynamicEmbeddedViews to patch
 	const whenDynamicEmbeddedViewFound = (dynamicLView: LView) => {
 		if (dynamicLView[HOST]) {
@@ -102,7 +131,7 @@ export function monkeyPatchDirectChildren(lView: LView, isRoot = false) {
 		}
 		monkeyPatchDirectChildren(dynamicLView);
 	};
-	loopDynamicEmbeddedViews({ lView, work: whenDynamicEmbeddedViewFound });
+	loopDynamicEmbeddedViews({lView, work: whenDynamicEmbeddedViewFound});
 }
 
 export function monkeyPatchRootNode(rootContext: RootContext) {

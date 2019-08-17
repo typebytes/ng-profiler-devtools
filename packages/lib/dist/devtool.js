@@ -30,11 +30,13 @@ var graph_1 = require("./visualisation/graph");
 var uuid = require("uuid");
 var constants_1 = require("./constants");
 var tree_view_builder_1 = require("./tree-view-builder");
-var messaging_1 = require("./messaging");
 var tracer = new tracing_1.Tracer();
 var treeGraph = new graph_1.GraphRender('liveTree');
 var lViewStateManager = new l_view_state_manager_1.LViewStateManager();
 var patchedTemplateFns = [];
+// In dev mode, there will be two cycles. The second cycle is purely used for making sure the unidirectional data flow is followed and
+// should not be visualised. We opt to not track this second cycle.
+var cdCycleCountInCurrentLoop = 0;
 var monkeyPatchTemplate = function (tView, rootLView) {
     if (tView.template.__template_patched__) {
         return;
@@ -45,35 +47,58 @@ var monkeyPatchTemplate = function (tView, rootLView) {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
+        console.log(rootLView, args[0], cdCycleCountInCurrentLoop);
+        if (rootLView) {
+            cdCycleCountInCurrentLoop++;
+        }
         // Mode will be 1 for creation and 2 for update
         var mode = args[0];
         // Don't get the next lView if we are in creation mode as it will be called immediately in update mode
-        if (mode === 1) {
+        if (mode === 1 || cdCycleCountInCurrentLoop !== 1) {
+            console.log('short circuiting');
             origTemplate.apply(void 0, __spread(args));
             return;
         }
         if (rootLView) {
             // If we have the rootLView, it means that we have started a new cycle
             lViewStateManager.resetState();
+            console.log('scheduled!');
             zone_handler_1.scheduleOutsideOfZone(function () {
+                cdCycleCountInCurrentLoop = 0;
                 var updatedTree = tree_view_builder_1.serialiseTreeViewItem(lViewStateManager.getTree());
                 var entireTree = tree_view_builder_1.serialiseTreeViewItem(tree_traversal_1.traverseTreeAndCreateTreeStructure(rootLView, true));
                 var updatedTreeAsInstructions = tree_traversal_1.transformTreeToInstructions(updatedTree);
-                treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
-                graph_1.renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
-                messaging_1.sendMessage({
-                    type: 'ENTIRE_TREE',
-                    payload: { entireTree: entireTree, instructions: util_1.mapToObject(updatedTreeAsInstructions) }
-                });
-                messaging_1.sendMessage({
-                    type: 'UPDATED_TREE',
-                    payload: { updatedTree: updatedTree }
-                });
+                // treeGraph.setUpdates(entireTree, updatedTreeAsInstructions);
+                // renderTree('lastUpdatedTree', entireTree, updatedTreeAsInstructions);
+                // const events = new CustomEvent('PassToBackground', {detail: message});
+                // sendMessage({
+                // 	type: 'ENTIRE_TREE',
+                // 	payload: {entireTree, instructions: mapToObject(updatedTreeAsInstructions)}
+                // });
+                // sendMessage({
+                // 	type: 'UPDATED_TREE',
+                // 	payload: {updatedTree}
+                // });
+                // window.postMessage('whatever', '*');
+                window.dispatchEvent(new CustomEvent('ContentScriptEvent', {
+                    detail: {
+                        type: 'ENTIRE_TREE',
+                        payload: { entireTree: entireTree, instructions: util_1.mapToObject(updatedTreeAsInstructions) }
+                    }
+                }));
+                console.log('updatedTree', updatedTree);
+                window.dispatchEvent(new CustomEvent('ContentScriptEvent', {
+                    detail: {
+                        type: 'UPDATED_TREE',
+                        payload: { updatedTree: updatedTree }
+                    }
+                }));
             });
         }
         // Set the pointer to the next lView
         lViewStateManager.getNextLView(null, rootLView);
         var currentLView = lViewStateManager.predictedNextLView;
+        // console.log('CD for ', currentLView[HOST].tagName);
         if (!currentLView[angular_core_1.HOST][constants_1.DEVTOOLS_IDENTIFIER]) {
             currentLView[angular_core_1.HOST][constants_1.DEVTOOLS_IDENTIFIER] = uuid();
         }
@@ -84,7 +109,8 @@ var monkeyPatchTemplate = function (tView, rootLView) {
         // Lastly, we need to update the Tracer to show a box. This has to be done in a timeout as the view dimensions have not
         // been updated at this point yet.
         zone_handler_1.scheduleOutsideOfZone(function () {
-            return tracer.present(currentLView[angular_core_1.HOST][constants_1.DEVTOOLS_IDENTIFIER], currentLView[angular_core_1.HOST].tagName, tracing_1.createMeasurement(currentLView[0].getBoundingClientRect()));
+            // console.log(`Tracing for ${currentLView[HOST].tagName}`, currentLView[HOST]);
+            tracer.present(currentLView[angular_core_1.HOST][constants_1.DEVTOOLS_IDENTIFIER], currentLView[angular_core_1.HOST].tagName, tracing_1.createMeasurement(currentLView[0].getBoundingClientRect()));
         });
     };
     tView.template.__template_patched__ = true;

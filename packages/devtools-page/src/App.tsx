@@ -45,10 +45,10 @@ class App extends React.Component<AppProps, AppState> {
 	setupConnection() {
 		const backgroundPageConnection = chrome.runtime.connect();
 		backgroundPageConnection.onMessage.addListener(((message: { type: string, payload: any }) => {
-			console.log('received a message from background', message);
+			// console.log('received a message from background', message);
 			switch (message.type) {
 				case 'ENTIRE_TREE': {
-					console.log('received entire tree');
+					// console.log('received entire tree');
 					this.count++;
 					this.props.entireTreeStore.setTreeUpdate(message.payload.entireTree, message.payload.instructions, '' + this.count);
 					break;
@@ -64,7 +64,7 @@ class App extends React.Component<AppProps, AppState> {
 			}
 		}));
 
-		console.log('Sending to INIT to the background');
+		// console.log('Sending to INIT to the background');
 		backgroundPageConnection.postMessage({
 			type: NG_DEVTOOLS_INIT,
 			tabId: chrome.devtools.inspectedWindow.tabId
@@ -90,7 +90,7 @@ export default App;
 // this.props.entireTreeStore.setTreeUpdate(entireTree, instructions, 'first');
 // this.props.updatedTreeStore.addUpdatedTree(updatedTree);
 // setTimeout(() => {
-// 	console.log('changed');
+// 	// console.log('changed');
 // 	this.props.updatedTreeStore.addUpdatedTree(updatedTree2);
 // 	this.props.entireTreeStore.setTreeUpdate(entireTree2, instructions2, 'second');
 // }, 4000);

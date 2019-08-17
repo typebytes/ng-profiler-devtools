@@ -2,6 +2,7 @@ const path = require('path');
 const DESTINATION = path.resolve(__dirname, 'dist');
 
 module.exports = {
+	devtool: 'inline-source-map',
 	entry: {
 		index: './src/index.ts'
 	},

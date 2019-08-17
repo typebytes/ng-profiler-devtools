@@ -1,11 +1,7 @@
 import React from 'react';
 import './TreePerCycle.css';
-import { renderTree } from '@ng-devtools/lib';
 import { UpdatedTreesStore } from '../../models/updated-tree';
 import { observer } from 'mobx-react';
-import List from '@material-ui/core/List/List';
-import ListItem from '@material-ui/core/ListItem/ListItem';
-import ListItemText from '@material-ui/core/ListItemText/ListItemText';
 
 export interface TreePerCycleProps {
 	store: UpdatedTreesStore;
@@ -24,7 +20,7 @@ export class TreePerCycle extends React.Component<TreePerCycleProps, TreePerCycl
 	}
 
 	// treeSelected = (index: number) => (e: any) => {
-	// 	console.log('e', e, index);
+	// 	// console.log('e', e, index);
 	// 	this.setState({selectedCycle: index});
 	// };
 

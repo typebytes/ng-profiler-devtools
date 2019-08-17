@@ -19,7 +19,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "strict": true,
+    "strict": false,
     "inlineSourceMap": true,
     "experimentalDecorators": true
   },

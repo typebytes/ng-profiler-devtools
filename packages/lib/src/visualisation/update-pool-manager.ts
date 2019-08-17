@@ -20,7 +20,7 @@ export abstract class UpdatePoolManager<T> {
 		for (const [uuid, dataToAdd] of items.entries
 			? items.entries()
 			: Object.entries(items)) {
-			console.log('pool length', this.pool.size);
+			// console.log('pool length', this.pool.size);
 			let data;
 			if (this.pool.has(uuid)) {
 				data = this.pool.get(uuid);
@@ -32,13 +32,13 @@ export abstract class UpdatePoolManager<T> {
 				};
 			}
 
-			console.log(data);
+			// console.log(data);
 			data = {
 				...data,
 				expiration: Date.now() + DURATION,
 				hit: data.hit + 1
 			};
-			console.log(data);
+			// console.log(data);
 
 			this.pool.set(uuid, data);
 		}
@@ -96,7 +96,6 @@ export abstract class UpdatePoolManager<T> {
 			if (this.clearTimer != null) {
 				clearTimeout(this.clearTimer);
 			}
-			// FIXME: clean this up
 			this.clearTimer = setTimeout(this.redraw.bind(this), minExpiration - now);
 		}
 
@@ -117,15 +116,15 @@ export abstract class UpdatePoolManager<T> {
 			return;
 		}
 
-		// FIXME fix this tshit
+		// FIXME fix this shit
 		this.drawing = true;
 		// Draw on the next animationFrame, use Zone to make sure it doesn't trigger a CD cycle in Angular
 		// if (Zone) {
 		//   Zone.root.run(() => {
-		//     requestAnimationFrame(this.draw.bind(this));
+		requestAnimationFrame(this.draw.bind(this));
 		//   });
 		// } else {
-		requestAnimationFrame(this.draw.bind(this));
+		// scheduleOutsideOfZone(() => requestAnimationFrame(this.draw.bind(this)));
 		// }
 	}
 

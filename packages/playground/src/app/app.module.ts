@@ -8,6 +8,7 @@ import { TodoService } from './todo.service';
 import { AppComponent } from './app.component';
 import { TodosListComponent } from './components/todos-list/todos-list.component';
 import { TodoItemComponent } from './components/todo-item/todo-item.component';
+import { DefaultPageComponent } from './default-page/default-page.component';
 
 const routes: Routes = [
 	{ path: '', component: TodoComponent, pathMatch: 'full' },
@@ -19,7 +20,8 @@ const routes: Routes = [
 		AppComponent,
 		TodoComponent,
 		TodosListComponent,
-		TodoItemComponent
+		TodoItemComponent,
+		DefaultPageComponent
 	],
 	imports: [
 		BrowserModule,
