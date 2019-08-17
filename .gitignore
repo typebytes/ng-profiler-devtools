@@ -11,6 +11,10 @@ packages/lib/node_modules
 packages/plugin/node_modules
 packages/devtools-page/node_modules
 packages/playground/node_modules
+packages/lib/dist
+packages/plugin/dist
+packages/devtools-page/dist
+packages/playground/dist
 
 # IDEs and editors
 /.idea

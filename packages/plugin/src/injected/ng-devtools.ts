@@ -3,7 +3,6 @@ import { EventSource } from '../constants';
 import { Message } from '../messaging/message-types';
 
 function handleMessage(e: MessageEvent) {
-	console.log('received message');
 	if (!e.data || !Array.isArray(e.data)) {
 		return;
 	}
