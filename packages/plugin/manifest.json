@@ -2,6 +2,7 @@
 	"name": "Angular Profiler Devtools",
 	"short_name": "NG Profiler",
 	"version": "0.0.0.1",
+	"version_name": "1.0.0.alpha-1",
 	"description": "Can be used to profile Angular apps with Ivy",
 	"devtools_page": "./devtools.html",
 	"background": {

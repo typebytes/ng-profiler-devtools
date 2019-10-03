@@ -1,7 +1,6 @@
 {
 	"compileOnSave": false,
 	"include": [".", "../lib"],
-	"exclude": ["**/core-js"],
 	"compilerOptions": {
 		"downlevelIteration": true,
 		"importHelpers": true,
@@ -11,9 +10,9 @@
 		"moduleResolution": "node",
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
-		"target": "es2015",
+		"target": "es5",
 		"typeRoots": ["node_modules/@types"],
-		"lib": ["dom"],
+		"lib": ["dom", "es2015"],
 		"module": "commonjs",
 		"baseUrl": "./"
 	}

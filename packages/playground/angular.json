@@ -14,6 +14,7 @@
 						"outputPath": "dist",
 						"index": "src/index.html",
 						"main": "src/main.ts",
+						"aot": true,
 						"tsConfig": "src/tsconfig.app.json",
 						"polyfills": "src/polyfills.ts",
 						"assets": ["src/assets", "src/favicon.ico"],

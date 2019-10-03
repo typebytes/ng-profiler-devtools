@@ -76,7 +76,7 @@ export interface LView extends Array<any> {
 	/**
 	 * The static data for this view. We need a reference to this so we can easily walk up the
 	 * node tree in DI and get the TView.data array associated with a node (where the
-	 * directive defs are stored).
+	 * directive defs are stored).t
 	 */
 	readonly [TVIEW]: TView;
 
