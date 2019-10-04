@@ -1,19 +1,27 @@
-# Angular change detection profiler
+# TodoTest
 
-Highlights all components in a Angular app when they are checked during a CD cycle check.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.8.
 
-TODO:
+## Development server
 
-- [x] Highlight all components checked
-- [x] Make sure it's a runtime thing (which works on any app, even prod builds)
-- [ ] Fix the tree rendering
-- [ ] Move to chrome plugin-
-- [ ] Test on more apps than one :)
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
-## Try it out
+## Code scaffolding
 
-Just run
-`yarn && yarn start`
-to make the app run and start clicking away.
+Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
-The components will light up. The entire tree of components is rendered below and the tree of components that were updated during the last CD cycle is rendered below that. The tree visualisation should be rendered in the chrome plugin.
+## Build
+
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+
+## Running unit tests
+
+Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+
+## Running end-to-end tests
+
+Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+
+## Further help
+
+To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).

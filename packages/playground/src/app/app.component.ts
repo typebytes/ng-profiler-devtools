@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { startTracing } from '../../../lib/src';
+// import { startTracing } from '../../../lib/src';
 
 @Component({
 	selector: 'app-root',
@@ -7,6 +7,6 @@ import { startTracing } from '../../../lib/src';
 })
 export class AppComponent {
 	constructor() {
-		startTracing();
+		// startTracing();
 	}
 }
